@@ -1,0 +1,34 @@
+{
+    "users": {
+        "7198795016": {
+            "referred_by": null,
+            "referrals": [
+                "8009385011"
+            ],
+            "mask": "mask_7198795016",
+            "username": "Authox"
+        },
+        "8009385011": {
+            "referred_by": "7198795016",
+            "referrals": [
+                "5995041264"
+            ],
+            "mask": "mask_8009385011",
+            "username": "SKYPECO"
+        },
+        "5995041264": {
+            "referred_by": "8009385011",
+            "referrals": [],
+            "mask": "FU#929",
+            "type": "FREE",
+            "credits": 0,
+            "username": "MKNXW"
+        }
+    },
+    "owner_id": 7198795016,
+    "7198795016": {
+        "first_name": "\ud83e\udec6 SKYPECO",
+        "username": "Authox",
+        "added": true
+    }
+}

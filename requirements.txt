@@ -1,0 +1,13 @@
+telebot
+bs4
+pyfiglet
+pycountry
+flask
+telebot
+telethon
+requests
+beautifulsoup4
+faker
+lxml
+certifi
+urllib3
