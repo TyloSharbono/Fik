@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 import base64
 import re
-
+import random
 
 
 
@@ -17,6 +17,17 @@ def Tele(ccx):
     except ValueError:
         print("Invalid card format. Use: '1234567890123456|MM|YY|CVC'")
         return None
+        
+        
+    email_list = [
+        "keniriy592@0tires.com",
+        "watofa3450@7tul.com",
+        "setod37773@7tul.com",
+        "heteh93883@7tul.com",
+        "fabof62361@acedby.com"
+    ]
+
+    random_email = random.choice(email_list);       print(random_email)
 
     session = requests.Session()
 
@@ -60,7 +71,7 @@ def Tele(ccx):
 }
 
     data = {
-    'log': 'fabof62361@acedby.com',
+    'log': random_email,
     'pwd': 'xitioPass@1999',
     'rememberme': 'forever',
     'submit': '',
