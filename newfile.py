@@ -66,7 +66,87 @@ Type /list to view all available commands.
 Use /help anytime for support.
 Enjoy the bot 🤖.</b>'''
     bot.reply_to(message, msg, parse_mode='HTML')
+ADMIN_ID = "5995041264"
+DATA_FILE = 'data.json'
 
+
+@bot.message_handler(commands=['cast'])
+def handle_broadcast(message):
+    if str(message.from_user.id) != ADMIN_ID:
+        return bot.reply_to(message, "❌ You are not authorized to use this command.")
+
+    if not message.reply_to_message:
+        return bot.reply_to(message, "⚠️ Please reply to a message to broadcast it.")
+
+    if not os.path.exists(DATA_FILE):
+        return bot.reply_to(message, "⚠️ No user data found.")
+
+    try:
+        with open(DATA_FILE, 'r') as f:
+            user_data = json.load(f)
+    except json.JSONDecodeError:
+        return bot.reply_to(message, "⚠️ Error reading user data.")
+
+    original = message.reply_to_message
+    success, denied, failed = 0, 0, 0
+
+    for user_id in user_data.keys():
+        try:
+            if original.text:
+                bot.send_message(user_id, original.text)
+
+            elif original.photo:
+                file_id = original.photo[-1].file_id  # highest resolution
+                caption = original.caption or ""
+                bot.send_photo(user_id, file_id, caption=caption)
+
+            elif original.video:
+                file_id = original.video.file_id
+                caption = original.caption or ""
+                bot.send_video(user_id, file_id, caption=caption)
+
+            elif original.document:
+                file_id = original.document.file_id
+                caption = original.caption or ""
+                bot.send_document(user_id, file_id, caption=caption)
+
+            elif original.audio:
+                file_id = original.audio.file_id
+                caption = original.caption or ""
+                bot.send_audio(user_id, file_id, caption=caption)
+
+            elif original.voice:
+                file_id = original.voice.file_id
+                bot.send_voice(user_id, file_id)
+
+            elif original.sticker:
+                file_id = original.sticker.file_id
+                bot.send_sticker(user_id, file_id)
+
+            elif original.animation:
+                file_id = original.animation.file_id
+                caption = original.caption or ""
+                bot.send_animation(user_id, file_id, caption=caption)
+
+            else:
+                failed += 1
+                continue
+
+            success += 1
+
+        except ApiTelegramException as e:
+            if "bot was blocked" in str(e) or "user is deactivated" in str(e):
+                denied += 1
+            else:
+                failed += 1
+        except Exception:
+            failed += 1
+
+    report = f"""✅ <b>Broadcast Summary</b>:
+📤 Success: <code>{success}</code>
+⛔ Denied: <code>{denied}</code>
+⚠️ Failed: <code>{failed}</code>"""
+    bot.send_message(ADMIN_ID, report, parse_mode='HTML')    
 # --- /help command ---
 @bot.message_handler(commands=['help'])
 def help_command(message):
@@ -83,7 +163,7 @@ def send_command_list(message):
 
 🔍 <b>Check Tools:</b>
 • <code>/chk</code> – B3 Auth Checker  
-• <code>/mchk</code> – Misc Auth Checker  
+• <code>/cchk</code> – Misc Auth Checker  
 • <code>/au</code> – Stripe Auth  
 
 ⚙️ <b>Generators:</b>
