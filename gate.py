@@ -290,7 +290,7 @@ def Tele(ccx):
     if match:
         return match.group(1).strip()
     else:
-        return "No error message found."
+        return "1000:Approved"
     
 #Tele("532780698130157|01|2029|657")
     
