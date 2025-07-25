@@ -184,5 +184,5 @@ def st(ccx):
                 return error_message
     except ValueError:
         return msg
-        time.sleep(20)
+        
 
