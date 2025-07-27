@@ -10,7 +10,9 @@ from reg import reg
 from gate import Tele
 from authst import st
 
-
+from ppc import ppc
+import asyncio
+from ppc import ppc 
 
 # Replace this with your bot token
 API_TOKEN = "7567332983:AAEl1bMw5oYT0DeLtSOWbjcP55R_emYbVgM"
@@ -66,87 +68,7 @@ Type /list to view all available commands.
 Use /help anytime for support.
 Enjoy the bot 🤖.</b>'''
     bot.reply_to(message, msg, parse_mode='HTML')
-ADMIN_ID = "5995041264"
-DATA_FILE = 'data.json'
 
-
-@bot.message_handler(commands=['cast'])
-def handle_broadcast(message):
-    if str(message.from_user.id) != ADMIN_ID:
-        return bot.reply_to(message, "❌ You are not authorized to use this command.")
-
-    if not message.reply_to_message:
-        return bot.reply_to(message, "⚠️ Please reply to a message to broadcast it.")
-
-    if not os.path.exists(DATA_FILE):
-        return bot.reply_to(message, "⚠️ No user data found.")
-
-    try:
-        with open(DATA_FILE, 'r') as f:
-            user_data = json.load(f)
-    except json.JSONDecodeError:
-        return bot.reply_to(message, "⚠️ Error reading user data.")
-
-    original = message.reply_to_message
-    success, denied, failed = 0, 0, 0
-
-    for user_id in user_data.keys():
-        try:
-            if original.text:
-                bot.send_message(user_id, original.text)
-
-            elif original.photo:
-                file_id = original.photo[-1].file_id  # highest resolution
-                caption = original.caption or ""
-                bot.send_photo(user_id, file_id, caption=caption)
-
-            elif original.video:
-                file_id = original.video.file_id
-                caption = original.caption or ""
-                bot.send_video(user_id, file_id, caption=caption)
-
-            elif original.document:
-                file_id = original.document.file_id
-                caption = original.caption or ""
-                bot.send_document(user_id, file_id, caption=caption)
-
-            elif original.audio:
-                file_id = original.audio.file_id
-                caption = original.caption or ""
-                bot.send_audio(user_id, file_id, caption=caption)
-
-            elif original.voice:
-                file_id = original.voice.file_id
-                bot.send_voice(user_id, file_id)
-
-            elif original.sticker:
-                file_id = original.sticker.file_id
-                bot.send_sticker(user_id, file_id)
-
-            elif original.animation:
-                file_id = original.animation.file_id
-                caption = original.caption or ""
-                bot.send_animation(user_id, file_id, caption=caption)
-
-            else:
-                failed += 1
-                continue
-
-            success += 1
-
-        except ApiTelegramException as e:
-            if "bot was blocked" in str(e) or "user is deactivated" in str(e):
-                denied += 1
-            else:
-                failed += 1
-        except Exception:
-            failed += 1
-
-    report = f"""✅ <b>Broadcast Summary</b>:
-📤 Success: <code>{success}</code>
-⛔ Denied: <code>{denied}</code>
-⚠️ Failed: <code>{failed}</code>"""
-    bot.send_message(ADMIN_ID, report, parse_mode='HTML')    
 # --- /help command ---
 @bot.message_handler(commands=['help'])
 def help_command(message):
@@ -165,10 +87,10 @@ def send_command_list(message):
 • <code>/chk</code> – B3 Auth Checker  
 • <code>/cchk</code> – Misc Auth Checker  
 • <code>/au</code> – Stripe Auth  
+• <code>/mass</code> – Mass Gen  
 
 ⚙️ <b>Generators:</b>
 • <code>/gen</code> – Generator  
-• <code>/mass</code> – Mass Gen  
 
 💳 <b>BIN Tools:</b>
 • <code>/bin</code> – Lookhub BIN  
@@ -763,8 +685,8 @@ def respond_to_vbv(message):
     if user_id in command_usage:
         current_time = datetime.now()
         time_diff = (current_time - command_usage[user_id]['last_time']).seconds
-        if time_diff < 35:
-            bot.reply_to(message, f"<b>Try again after {35 - time_diff} seconds.</b>", parse_mode="HTML")
+        if time_diff < 50:
+            bot.reply_to(message, f"<b>Try again after {50 - time_diff} seconds.</b>", parse_mode="HTML")
             return
     else:
         command_usage[user_id] = {'last_time': datetime.now()}
@@ -982,8 +904,8 @@ def respond_to_vbv(message):
     current_time = datetime.now()
     last_usage = command_usage.get(user_id, None)
 
-    if last_usage and (current_time - last_usage).seconds < 45:
-        remaining_time = 45 - (current_time - last_usage).seconds
+    if last_usage and (current_time - last_usage).seconds < 55:
+        remaining_time = 55 - (current_time - last_usage).seconds
         bot.reply_to(
             message, 
             f"<b>Try again after {remaining_time} seconds.</b>", 
@@ -1060,7 +982,6 @@ def check_au_rate_limit(user_id, cooldown):
         if elapsed_time < cooldown:
             return cooldown - elapsed_time  # Return remaining cooldown time
 
-    # Update last usage time
     au_command_usage[user_id] = datetime.now()
     return 0  # No cooldown
 
@@ -1069,16 +990,16 @@ def respond_to_au(message):
     """Handles the /au and .au commands."""
     try:
         cc = message.reply_to_message.text if message.reply_to_message else message.text
-        cc = str(reg(cc))  # Assuming reg() is a function that formats the CC input
+        cc = str(reg(cc))
     except:
         cc = 'None'
 
     if cc == 'None':
         bot.edit_message_text(
-            chat_id=message.chat.id, 
-            message_id=bot.reply_to(message, "𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙔𝙤𝙪𝙧 𝘾𝙖𝙧𝙙𝙨...⌛").message_id, 
+            chat_id=message.chat.id,
+            message_id=bot.reply_to(message, "𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙔𝙤𝙪𝙧 𝘾𝙖𝙧𝙙𝙨...⌛").message_id,
             text='''<b>ɢᴀᴛᴇ ɴᴀᴍᴇ: sᴛʀɪᴘᴇ ᴀᴜᴛʜ ♻️
-            
+
 ᴍᴇssᴀɢᴇ: ɴᴏ ᴄᴄ ғᴏᴜɴᴅ ᴏʀ ɪɴᴄᴏʀʀᴇᴄᴛ ғᴏʀᴍᴀᴛ ❌
 
 ᴜsᴀɢᴇ: /au ᴄᴄ|ᴍᴇs|ᴀɴᴏ|ᴄᴠᴠ</b>''',
@@ -1087,24 +1008,22 @@ def respond_to_au(message):
         return
 
     user_id = message.from_user.id
-    cooldown = 45  # Cooldown time in seconds
+    cooldown = 40
     remaining_time = check_au_rate_limit(user_id, cooldown)
-    if remaining_time > 0:  # Fixed condition to check remaining time correctly
+    if remaining_time > 0:
         bot.reply_to(message, f"<b>Try again after {remaining_time} seconds.</b>", parse_mode="HTML")
-        return 
+        return
 
     processing_msg = bot.reply_to(message, "𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙔𝙤𝙪𝙧 𝘾𝙖𝙧𝙙𝙨...⌛").message_id
 
-    # Process /au command in a separate thread
     threading.Thread(target=process_au_command, args=(message, processing_msg, cc)).start()
-
 def process_au_command(message, processing_msg_id, cc):
     """Handles the processing of the /au command in a separate thread."""
     gate = 'sᴛʀɪᴘᴇ ᴀᴜᴛʜ'
     start_time = time.time()
 
     try:
-        last = str(st(cc))  # Assuming st() is a function that checks CC status
+        last = asyncio.run(ppc(cc))  # ✅ Call async ppc from ppc.py
     except Exception as e:
         last = 'Error'
 
@@ -1134,7 +1053,7 @@ def process_au_command(message, processing_msg_id, cc):
 </b>'''
 
     msgd = f'''<b>𝘿𝙚𝙘𝙡𝙞𝙣𝙚𝙙 ❌
-        
+
 𝗖𝗮𝗿𝗱: <code>{cc}</code>
 𝐆𝐚𝐭𝐞𝐰𝐚𝐲: {gate}
 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {last}
@@ -1146,7 +1065,7 @@ def process_au_command(message, processing_msg_id, cc):
 𝗧𝗶𝗺𝗲: {execution_time:.2f} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬
 </b>'''
 
-    if any(keyword in last for keyword in ["funds", "Invalid postal", "avs", "added", "Duplicate", "Approved","allowed", "Purchase"]):
+    if any(keyword in last.lower() for keyword in ["funds", "invalid postal", "avs", "added", "duplicate", "approved", "allowed", "purchase"]):
         bot.edit_message_text(chat_id=message.chat.id, message_id=processing_msg_id, text=msg, parse_mode="HTML")
     else:
         bot.edit_message_text(chat_id=message.chat.id, message_id=processing_msg_id, text=msgd, parse_mode="HTML")
@@ -1243,7 +1162,7 @@ def process_cchk_command(message, processing_msg):
     
     cards = [cc.strip() for cc in card_details.split('\n') if cc.strip()]
     valid_cards = [validate_cc(cc) for cc in cards]
-    valid_cards = [cc for cc in valid_cards if cc][:7]  # Limit to 25 cards
+    valid_cards = [cc for cc in valid_cards if cc][:5]  # Limit to 25 cards
 
     if not valid_cards:
         bot.edit_message_text("⚠️ ᴄᴄ ɴᴏᴛ ғᴏᴜɴᴅ\n\nɴᴏ ᴄᴄ ᴅᴇᴛᴀɪʟs ᴡᴇʀᴇ ғᴏᴜɴᴅ ɪɴ ʏᴏᴜʀ ɪɴᴘᴜᴛ. ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴠᴀʟɪᴅ ᴄᴄ ᴅᴇᴛᴀɪʟs ᴛᴏ ᴘʀᴏᴄᴇᴇᴅ.\n\nᴜsᴀɢᴇ: /cchk ᴄᴄ|ᴍᴇs|ᴀɴᴏ|ᴄᴠᴠ", 
