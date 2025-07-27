@@ -1132,14 +1132,18 @@ def process_card_cchk(cc):
     return f"Card↯ <code>{cc}</code>\nStatus - {status}\nResult -⤿ {last} ⤾\n"
 
 # Function to process a single card for .mass (using st(cc))
+# Function to process a single card for .mass (using st(cc))
 def process_card_mass(cc):
+    import asyncio
+    from ppc import ppc  # ✅ Import your async function from main.py
+
     brand, card_type, country, country_flag, bank = get_card_info(cc)
     try:
-        last = str(st(cc))  # Check card authorization with st() for .mass
+        last = str(asyncio.run(ppc(cc)))  # ✅ Await the async ppc()
     except Exception:
         last = 'Error'
 
-    # Determine status based on last response
+    # Determine status
     if any(keyword in last for keyword in ["Funds", "added", "Approved", "Purchase"]):
         status = "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅"
     elif any(keyword in last for keyword in ["Invalid postal", "avs", "Duplicate", "allowed"]):
@@ -1148,6 +1152,8 @@ def process_card_mass(cc):
         status = "𝐃𝐞𝐜𝐥𝐢𝐧𝐞𝐝 ❌"
 
     return f"Card↯ <code>{cc}</code>\nStatus - {status}\nResult -⤿ {last} ⤾\n"
+
+
 
 # --- .cchk Command Logic ---
 def process_cchk_command(message, processing_msg):
