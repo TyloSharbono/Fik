@@ -2,32 +2,13 @@ import aiohttp
 import asyncio
 import json
 import random
-SETS = [
-    {
-        "DOMAIN": "https://nashvillefloristllc.com/",
-        "PK": "pk_live_qMCeGJBjf8KoTyeQ3MejBvgF"
-    },
-    {
-        "DOMAIN": "https://infiniteautowerks.com/",
-        "PK": "pk_live_51MwcfkEreweRX4nmQHMS2A6b1LooXYEf671WoSSZTusv9jAbcwEwE5cOXsOAtdCwi44NGBrcmnzSy7LprdcAs2Fp00QKpqinae"
-    },
-    {
-        "DOMAIN": "https://johnnysbackyard.co.uk/",
-        "PK": "pk_live_51ETDmyFuiXB5oUVxaIafkGPnwuNcBxr1pXVhvLJ4BrWuiqfG6SldjatOGLQhuqXnDmgqwRA7tDoSFlbY4wFji7KR0079TvtxNs"
-    },
-    {
-        "DOMAIN": "https://faithmariebaczko.ca/",
-        "PK": "pk_live_51ETDmyFuiXB5oUVxaIafkGPnwuNcBxr1pXVhvLJ4BrWuiqfG6SldjatOGLQhuqXnDmgqwRA7tDoSFlbY4wFji7KR0079TvtxNs"
-    }
-]
-
-# Randomly choose one complete set
-selected_set = random.choice(SETS)
 
 
 
-DOMAIN = selected_set["DOMAIN"]
-PK = selected_set["PK"]
+
+
+DOMAIN = "https://nashvillefloristllc.com/"
+PK = "pk_live_qMCeGJBjf8KoTyeQ3MejBvgF"
 
 def parseX(data, start, end):
     try:
@@ -175,7 +156,7 @@ async def ppc(cards):
             else:
                 return req4
         except json.JSONDecodeError:
-            return "Invalid JSON"
+            return req4
         except Exception:
             return "Error:505"
 
