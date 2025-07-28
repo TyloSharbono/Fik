@@ -73,7 +73,6 @@ def Tele(ccx):
     data = {
     'log': random_email,
     'pwd': 'xitioPass@1999',
-    'rememberme': 'forever',
     'submit': '',
     'redirect_to': 'https://disciplinedfinancialmanagement.com/wp-admin/',
     'testcookie': '1',
