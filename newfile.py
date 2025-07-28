@@ -5,14 +5,19 @@ from datetime import datetime
 from reg import reg
 import threading
 from bs4 import BeautifulSoup
+import json
+import os
+
+
 
 from reg import reg
 from gate import Tele
 from authst import st
-
 from ppc import ppc
 import asyncio
-from ppc import ppc 
+from ppc import ppc  # ✅ importing the ppc function
+
+
 
 # Replace this with your bot token
 API_TOKEN = "7567332983:AAEl1bMw5oYT0DeLtSOWbjcP55R_emYbVgM"
@@ -22,52 +27,33 @@ command_usage = {}
 
 # Channel ID for forwarding reports
 REPORT_CHANNEL_ID = -1001903160469
+REQUIRED_CHANNEL = -1002311823274 
+
 
 # --- /start command ---
 
 
+
+
+# 🔰 /start command for all users
 @bot.message_handler(commands=['start'])
-def send_welcome(message):
-    user_id = str(message.from_user.id)
-    data_file = 'data.json'
-
-    # Ensure file exists
-    if not os.path.exists(data_file):
-        with open(data_file, 'w') as f:
-            json.dump({}, f)  # empty dict
-
-    # Load existing data
-    with open(data_file, 'r') as f:
-        try:
-            user_data = json.load(f)
-        except json.JSONDecodeError:
-            user_data = {}
-
-    # Add user if not already in file
-    if user_id not in user_data:
-        user_data[user_id] = {
-            "first_name": message.from_user.first_name,
-            "username": message.from_user.username,
-            "added": True
-        }
-
-        with open(data_file, 'w') as f:
-            json.dump(user_data, f, indent=4)
-
-    # Send welcome message
+def send_start(message):
     msg = '''<b>🤖 Bot Status: Active ✅
 
-🔴 Important Note:
-To use this bot, you must have a mask!
-👉 Get your mask & stay updated via the channel: @maskthenetcat
+🔴 ɪᴍᴘᴏʀᴛᴀɴᴛ ɴᴏᴛᴇ :
+
+🚨 To use this bot and stay updated — make sure to join our channel! 
+<a href="https://t.me/hrefcm/111">&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; channel &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;</a>
 
 ⚠️ Commands List:
 Type /list to view all available commands.
 
-🚨 Need help?
-Use /help anytime for support.
-Enjoy the bot 🤖.</b>'''
+🆘 Need help? 
+Use /help anytime for support.</b>'''
     bot.reply_to(message, msg, parse_mode='HTML')
+
+
+
 
 # --- /help command ---
 @bot.message_handler(commands=['help'])
@@ -85,12 +71,12 @@ def send_command_list(message):
 
 🔍 <b>Check Tools:</b>
 • <code>/chk</code> – B3 Auth Checker  
-• <code>/cchk</code> – Misc Auth Checker  
+• <code>/mchk</code> – Misc Auth Checker  
 • <code>/au</code> – Stripe Auth  
-• <code>/mass</code> – Mass Gen  
 
 ⚙️ <b>Generators:</b>
 • <code>/gen</code> – Generator  
+• <code>/mass</code> – Mass Gen  
 
 💳 <b>BIN Tools:</b>
 • <code>/bin</code> – Lookhub BIN  
@@ -685,8 +671,8 @@ def respond_to_vbv(message):
     if user_id in command_usage:
         current_time = datetime.now()
         time_diff = (current_time - command_usage[user_id]['last_time']).seconds
-        if time_diff < 50:
-            bot.reply_to(message, f"<b>Try again after {50 - time_diff} seconds.</b>", parse_mode="HTML")
+        if time_diff < 35:
+            bot.reply_to(message, f"<b>Try again after {35 - time_diff} seconds.</b>", parse_mode="HTML")
             return
     else:
         command_usage[user_id] = {'last_time': datetime.now()}
@@ -880,55 +866,69 @@ def get_country_name(code, fallback_country_name):
         return fallback_country_name
 
 # --- .chk Command ---
+REQUIRED_CHANNEL = -1002311823274  # 🔁 Replace with your private channel ID
+
 @bot.message_handler(func=lambda message: message.text.lower().startswith('.chk') or message.text.lower().startswith('/chk'))
 def respond_to_vbv(message):
+    user_id = message.from_user.id
+
+    # --- Check user membership ---
+    try:
+        member = bot.get_chat_member(REQUIRED_CHANNEL, user_id)
+        if member.status not in ["member", "administrator", "creator"]:
+            raise Exception("Not a member")
+    except:
+        msg = '''<b>🤖 Bot Status: Active ✅
+
+🔴 ɪᴍᴘᴏʀᴛᴀɴᴛ ɴᴏᴛᴇ :
+
+🚨 To use this bot and stay updated — make sure to join our channel!
+<a href="https://t.me/hrefcm/111">&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; channel &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;</a>
+
+🆘 Need help?
+Use /help anytime for support.</b>'''
+        bot.reply_to(message, msg, parse_mode='HTML')
+        return
+
+    # --- Extract CC ---
     try:
         cc = message.reply_to_message.text if message.reply_to_message else message.text
-        cc = str(reg(cc))  # Assuming reg() is defined elsewhere
+        cc = str(reg(cc))  # 🔁 Assumes reg() is defined
     except:
         cc = 'None'
 
     if cc == 'None':
-        bot.reply_to(
-            message, 
-            text='''<b>ɢᴀᴛᴇ ɴᴀᴍᴇ: Braintree ᴀᴜᴛʜ ♻️
+        bot.reply_to(message, '''<b>ɢᴀᴛᴇ ɴᴀᴍᴇ: Braintree ᴀᴜᴛʜ ♻️
 
 ᴍᴇssᴀɢᴇ: ɴᴏ ᴄᴄ ғᴏᴜɴᴅ ɪɴ ʏᴏᴜʀ ɪɴᴘᴜᴛ ᴏʀ ɪɴᴄᴏʀʀᴇᴄᴛ ғᴏʀᴍᴀᴛ ❌
 
-ᴜsᴀɢᴇ: /chk ᴄᴄ|ᴍᴇs|ᴀɴᴏ|ᴄᴠᴠ</b>''',
-            parse_mode="HTML"
-        )
+ᴜsᴀɢᴇ: /chk ᴄᴄ|ᴍᴇs|ᴀɴᴏ|ᴄᴠᴠ</b>''', parse_mode="HTML")
         return
 
-    user_id = message.from_user.id
+    # --- Rate Limit Check ---
     current_time = datetime.now()
     last_usage = command_usage.get(user_id, None)
 
-    if last_usage and (current_time - last_usage).seconds < 55:
-        remaining_time = 55 - (current_time - last_usage).seconds
-        bot.reply_to(
-            message, 
-            f"<b>Try again after {remaining_time} seconds.</b>", 
-            parse_mode="HTML"
-        )
-        return 
+    if last_usage and (current_time - last_usage).seconds < 45:
+        remaining_time = 45 - (current_time - last_usage).seconds
+        bot.reply_to(message, f"<b>Try again after {remaining_time} seconds.</b>", parse_mode="HTML")
+        return
 
     command_usage[user_id] = current_time
-
     processing_msg = bot.reply_to(message, "𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙔𝙤𝙪𝙧 𝘾𝙖𝙧𝙙𝙨...⌛").message_id
-
     threading.Thread(target=process_chk_command, args=(message, processing_msg, cc)).start()
 
+# --- Worker Function for CC Check ---
 def process_chk_command(message, processing_msg_id, cc):
     gate = 'Braintree ᴀᴜᴛʜ'
     start_time = time.time()
 
     try:
-        last = str(Tele(cc))  # Assuming Tele() is defined elsewhere
+        last = str(Tele(cc))  # 🔁 Assumes Tele() is defined
     except Exception as e:
         last = 'Error'
 
-    # Get BIN info from CSV
+    # --- BIN Info ---
     bin_info = get_bin_info_from_csv(cc[:6])
     if bin_info:
         brand = bin_info.get('brand', 'Unknown')
@@ -941,6 +941,8 @@ def process_chk_command(message, processing_msg_id, cc):
         brand = card_type = country = country_flag = bank = level = 'Unknown'
 
     execution_time = time.time() - start_time
+
+    # --- Response messages ---
     msg = f'''<b>𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅
 
 𝗖𝗮𝗿𝗱: <code>{cc}</code>
@@ -955,7 +957,7 @@ def process_chk_command(message, processing_msg_id, cc):
 </b>'''
 
     msgd = f'''<b>𝘿𝙚𝙘𝙡𝙞𝙣𝙚𝙙 ❌
-        
+
 𝗖𝗮𝗿𝗱: <code>{cc}</code>
 𝐆𝐚𝐭𝐞𝐰𝐚𝐲: {gate}
 𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {last}
@@ -967,27 +969,52 @@ def process_chk_command(message, processing_msg_id, cc):
 𝗧𝗶𝗺𝗲: {execution_time:.2f} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬
 </b>'''
 
-    if "funds" in last or 'Invalid postal' in last or 'avs' in last or 'added' in last or 'Duplicate' in last or 'Approved' in last or 'allowed' in last or 'Purchase' in last:
+    # --- Success keyword check ---
+    if any(x in last.lower() for x in ['funds', 'invalid postal', 'avs', 'added', 'duplicate', 'approved', 'allowed', 'purchase']):
         bot.edit_message_text(chat_id=message.chat.id, message_id=processing_msg_id, text=msg, parse_mode="HTML")
     else:
         bot.edit_message_text(chat_id=message.chat.id, message_id=processing_msg_id, text=msgd, parse_mode="HTML")
 
-# --- .au Command ---
-def check_au_rate_limit(user_id, cooldown):
-    """Check if a user can use /au command based on cooldown time."""
-    last_usage = au_command_usage.get(user_id)
 
+
+# --- .au Command ---
+
+au_command_usage = {}  # To track rate limits
+
+# --- Rate limit function ---
+def check_au_rate_limit(user_id, cooldown):
+    last_usage = au_command_usage.get(user_id)
     if last_usage:
         elapsed_time = (datetime.now() - last_usage).seconds
         if elapsed_time < cooldown:
-            return cooldown - elapsed_time  # Return remaining cooldown time
-
+            return cooldown - elapsed_time
     au_command_usage[user_id] = datetime.now()
-    return 0  # No cooldown
+    return 0
 
+# --- .au / /au command handler ---
 @bot.message_handler(func=lambda message: message.text.lower().startswith(('.au', '/au')))
 def respond_to_au(message):
-    """Handles the /au and .au commands."""
+    user_id = message.from_user.id
+
+    # --- Check user membership ---
+    try:
+        member = bot.get_chat_member(REQUIRED_CHANNEL, user_id)
+        if member.status not in ["member", "administrator", "creator"]:
+            raise Exception("Not a member")
+    except:
+        msg = '''<b>🤖 Bot Status: Active ✅
+
+🔴 ɪᴍᴘᴏʀᴛᴀɴᴛ ɴᴏᴛᴇ :
+
+🚨 To use this bot and stay updated — make sure to join our channel!
+<a href="https://t.me/hrefcm/111">&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; channel &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;</a>
+
+🆘 Need help?
+Use /help anytime for support.</b>'''
+        bot.reply_to(message, msg, parse_mode='HTML')
+        return
+
+    # --- Extract CC ---
     try:
         cc = message.reply_to_message.text if message.reply_to_message else message.text
         cc = str(reg(cc))
@@ -1007,8 +1034,8 @@ def respond_to_au(message):
         )
         return
 
-    user_id = message.from_user.id
-    cooldown = 40
+    # --- Cooldown check ---
+    cooldown = 45
     remaining_time = check_au_rate_limit(user_id, cooldown)
     if remaining_time > 0:
         bot.reply_to(message, f"<b>Try again after {remaining_time} seconds.</b>", parse_mode="HTML")
@@ -1017,14 +1044,15 @@ def respond_to_au(message):
     processing_msg = bot.reply_to(message, "𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙔𝙤𝙪𝙧 𝘾𝙖𝙧𝙙𝙨...⌛").message_id
 
     threading.Thread(target=process_au_command, args=(message, processing_msg, cc)).start()
+
+# --- Main logic thread ---
 def process_au_command(message, processing_msg_id, cc):
-    """Handles the processing of the /au command in a separate thread."""
     gate = 'sᴛʀɪᴘᴇ ᴀᴜᴛʜ'
     start_time = time.time()
 
     try:
-        last = asyncio.run(ppc(cc))  # ✅ Call async ppc from ppc.py
-    except Exception as e:
+        last = asyncio.run(ppc(cc))
+    except Exception:
         last = 'Error'
 
     bin_info = get_bin_info_from_csv(cc[:6])
@@ -1032,13 +1060,14 @@ def process_au_command(message, processing_msg_id, cc):
         brand = bin_info.get('brand', 'Unknown')
         card_type = bin_info.get('type', 'Unknown')
         country = get_country_name(bin_info.get('country', 'Unknown'), 'Unknown')
-        country_flag = bin_info.get('flag', 'Unknown')
+        country_flag = bin_info.get('flag', '🏳️')
         bank = bin_info.get('bank', 'Unknown')
         level = bin_info.get('level', 'Unknown')
     else:
         brand = card_type = country = country_flag = bank = level = 'Unknown'
 
     execution_time = time.time() - start_time
+
     msg = f'''<b>𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅
 
 𝗖𝗮𝗿𝗱: <code>{cc}</code>
@@ -1056,7 +1085,7 @@ def process_au_command(message, processing_msg_id, cc):
 
 𝗖𝗮𝗿𝗱: <code>{cc}</code>
 𝐆𝐚𝐭𝐞𝐰𝐚𝐲: {gate}
-𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {last}
+𝐑𝐞𝐬𝐩𝗼𝗻𝘀𝗲: {last}
 
 𝗜𝗻𝗳𝗼: <code>{cc[:6]} - {card_type} - {brand} - {level}</code>
 𝐈𝐬𝐬𝐮𝐞𝐫: {bank}
@@ -1088,176 +1117,152 @@ def get_user_plan(user_id):
         json_data = json.load(file)
     return json_data.get(str(user_id), {}).get("plan", "𝗙𝗥𝗘𝗘")
 
-# Separate dictionaries for each command's rate limiting
-cchk_last_used = {}  # For .cchk command
-mass_last_used = {}  # For .mass command
 
-# Function to validate and filter CCs (shared between both)
-def validate_cc(cc):
+
+# Rate limit tracking
+cchk_last_used = {}
+mass_last_used = {}
+
+# --- Channel check logic ---
+def is_user_joined(user_id):
     try:
-        cc_valid = str(reg(cc))  # Simulated validation function
-        return cc_valid if cc_valid and cc_valid != "None" else None
+        member = bot.get_chat_member(REQUIRED_CHANNEL, user_id)
+        return member.status in ["member", "administrator", "creator"]
+    except:
+        return False
+
+def send_join_message(message):
+    msg = '''<b>🤖 Bot Status: Active ✅
+
+🔴 ɪᴍᴘᴏʀᴛᴀɴᴛ ɴᴏᴛᴇ :
+
+🚨 To use this bot and stay updated — make sure to join our channel!
+<a href="https://t.me/hrefcm/111">&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; channel &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;</a>
+
+🆘 Need help?
+Use /help anytime for support.</b>'''
+    bot.reply_to(message, msg, parse_mode="HTML")
+
+# --- Validate CC ---
+def validate_cc(cc_line):
+    try:
+        cc_valid = reg(cc_line)
+        return cc_valid if cc_valid != "None" else None
     except:
         return None
 
-# Function to fetch card details (shared between both)
+# --- BIN Info ---
 def get_card_info(cc):
     try:
-        data = requests.get(f'https://bins.antipublic.cc/bins/{cc[:6]}').json()
-        brand = data.get('brand', 'Unknown')
-        card_type = data.get('type', 'Unknown')
-        country = data.get('country_name', 'Unknown')
-        country_flag = data.get('country_flag', 'Unknown')
-        bank = data.get('bank', 'Unknown')
+        data = requests.get(f"https://bins.antipublic.cc/bins/{cc[:6]}").json()
+        brand = data.get("brand", "Unknown")
+        card_type = data.get("type", "Unknown")
+        country = data.get("country_name", "Unknown")
+        country_flag = data.get("country_flag", "🏳️")
+        bank = data.get("bank", "Unknown")
     except:
-        brand = card_type = country = country_flag = bank = 'Unknown'
+        brand = card_type = country = country_flag = bank = "Unknown"
     return brand, card_type, country, country_flag, bank
 
-# Function to process a single card for .cchk (using Tele(cc))
+# ===============================
+#    . C C H K    C O M M A N D
+# ===============================
 def process_card_cchk(cc):
-    brand, card_type, country, country_flag, bank = get_card_info(cc)
+    # Simulate using Tele(cc) logic
+    brand, card_type, country, flag, bank = get_card_info(cc)
     try:
-        last = str(Tele(cc))  # Check card authorization with Tele() for .cchk
-    except Exception:
-        last = 'Error'
+        result = str(Tele(cc))   # Replace with actual call to Tele(cc)
+    except:
+        result = "Error"
 
-    # Determine status based on last response
-    if any(keyword in last for keyword in ["Funds", "added", "Approved", "Purchase"]):
-        status = "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅"
-    elif any(keyword in last for keyword in ["Invalid postal", "avs", "Duplicate", "allowed"]):
-        status = "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅"
-    else:
-        status = "𝐃𝐞𝐜𝐥𝐢𝐧𝐞𝐝 ❌"
+    status = "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅" if "approved" in result.lower() else "𝐃𝐞𝐜𝐥𝐢𝐧𝐞𝐝 ❌"
+    return f"Card↯ <code>{cc}</code>\nStatus - {status}\nResult -⤿ {result} ⤾\n"
 
-    return f"Card↯ <code>{cc}</code>\nStatus - {status}\nResult -⤿ {last} ⤾\n"
-
-# Function to process a single card for .mass (using st(cc))
-# Function to process a single card for .mass (using st(cc))
-def process_card_mass(cc):
-    import asyncio
-    from ppc import ppc  # ✅ Import your async function from main.py
-
-    brand, card_type, country, country_flag, bank = get_card_info(cc)
-    try:
-        last = str(asyncio.run(ppc(cc)))  # ✅ Await the async ppc()
-    except Exception:
-        last = 'Error'
-
-    # Determine status
-    if any(keyword in last for keyword in ["Funds", "added", "Approved", "Purchase"]):
-        status = "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅"
-    elif any(keyword in last for keyword in ["Invalid postal", "avs", "Duplicate", "allowed"]):
-        status = "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅"
-    else:
-        status = "𝐃𝐞𝐜𝐥𝐢𝐧𝐞𝐝 ❌"
-
-    return f"Card↯ <code>{cc}</code>\nStatus - {status}\nResult -⤿ {last} ⤾\n"
-
-
-
-# --- .cchk Command Logic ---
 def process_cchk_command(message, processing_msg):
     user_id = message.from_user.id
     current_time = time.time()
 
-    # Extract CC details
-    if message.reply_to_message:
-        card_details = message.reply_to_message.text.strip()
-    else:
-        card_details = message.text[5:].strip()
-    
-    cards = [cc.strip() for cc in card_details.split('\n') if cc.strip()]
-    valid_cards = [validate_cc(cc) for cc in cards]
-    valid_cards = [cc for cc in valid_cards if cc][:5]  # Limit to 25 cards
-
-    if not valid_cards:
-        bot.edit_message_text("⚠️ ᴄᴄ ɴᴏᴛ ғᴏᴜɴᴅ\n\nɴᴏ ᴄᴄ ᴅᴇᴛᴀɪʟs ᴡᴇʀᴇ ғᴏᴜɴᴅ ɪɴ ʏᴏᴜʀ ɪɴᴘᴜᴛ. ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴠᴀʟɪᴅ ᴄᴄ ᴅᴇᴛᴀɪʟs ᴛᴏ ᴘʀᴏᴄᴇᴇᴅ.\n\nᴜsᴀɢᴇ: /cchk ᴄᴄ|ᴍᴇs|ᴀɴᴏ|ᴄᴠᴠ", 
-                            chat_id=message.chat.id, message_id=processing_msg.message_id)
-        return  
-
-    # Apply rate limit for .cchk
     if user_id in cchk_last_used and (current_time - cchk_last_used[user_id]) < 80:
-        remaining_time = int(80 - (current_time - cchk_last_used[user_id]))
-        bot.edit_message_text(f"⏳ Please wait {remaining_time} seconds before using .cchk again.", 
-                            chat_id=message.chat.id, message_id=processing_msg.message_id)
+        wait = int(80 - (current_time - cchk_last_used[user_id]))
+        bot.edit_message_text(f"⏳ Please wait {wait}s before using .cchk again.", chat_id=message.chat.id, message_id=processing_msg.message_id)
         return
 
     cchk_last_used[user_id] = current_time
 
-    start_time = time.time()
-    batch_results = ["↯ Braintree ᴀᴜᴛʜ ♻️\n"]
+    text = message.reply_to_message.text if message.reply_to_message else message.text[5:]
+    cards = [validate_cc(i.strip()) for i in text.strip().split('\n') if i.strip()]
+    cards = [c for c in cards if c][:7]
 
-    for cc in valid_cards:
-        batch_results.append(process_card_cchk(cc))  # Use process_card_cchk with Tele()
+    if not cards:
+        bot.edit_message_text("⚠️ ɴᴏ ᴠᴀʟɪᴅ ᴄᴄ ꜰᴏᴜɴᴅ.\nᴜsᴀɢᴇ: /cchk ᴄᴄ|ᴍᴇs|ᴀɴᴏ|ᴄᴠᴠ", chat_id=message.chat.id, message_id=processing_msg.message_id)
+        return
 
-    # Calculate execution time
-    end_time = time.time()
-    total_execution_time = end_time - start_time
-    total_hours = int(total_execution_time // 3600)
-    total_minutes = int((total_execution_time % 3600) // 60)
-    total_seconds = total_execution_time % 60
+    result = ["↯ Braintree ᴀᴜᴛʜ ♻️\n"]
+    start = time.time()
+    for cc in cards:
+        result.append(process_card_cchk(cc))
+    elapsed = time.time() - start
+    result.append(f"- 𝗧𝗶𝗺𝗲 - {elapsed:.2f}s")
 
-    batch_results.append(f"- 𝗧𝗶𝗺𝗲 -  {total_hours}.h {total_minutes}.m {total_seconds:.2f}.s")
+    bot.edit_message_text("\n".join(result), chat_id=message.chat.id, message_id=processing_msg.message_id, parse_mode="HTML")
 
-    bot.edit_message_text("\n".join(batch_results), chat_id=message.chat.id, 
-                         message_id=processing_msg.message_id, parse_mode="HTML")
-
-@bot.message_handler(func=lambda message: message.text.lower().startswith('.cchk') or message.text.lower().startswith('/cchk'))
+@bot.message_handler(func=lambda m: m.text.lower().startswith(('.cchk', '/cchk')))
 def respond_to_cchk(message):
-    processing_msg = bot.reply_to(message, "- 𝐆𝐚𝐭𝐞𝐰𝐚𝐲 -  Braintree ᴀᴜᴛʜ ♻️\n- 𝐒𝐭𝐚𝐭𝐮𝐬 - Processing...⌛️", parse_mode="HTML")
-    threading.Thread(target=process_cchk_command, args=(message, processing_msg)).start()
+    if not is_user_joined(message.from_user.id):
+        send_join_message(message)
+        return
+    msg = bot.reply_to(message, "- 𝐆𝐚𝐭𝐞𝐰𝐚𝐲 -  Braintree ᴀᴜᴛʜ ♻️\n- 𝐒𝐭𝐚𝐭𝐮𝐬 - Processing...⌛️", parse_mode="HTML")
+    threading.Thread(target=process_cchk_command, args=(message, msg)).start()
 
-# --- .mass Command Logic ---
+
+# ===============================
+#    . M A S S    C O M M A N D
+# ===============================
+def process_card_mass(cc):
+    brand, card_type, country, flag, bank = get_card_info(cc)
+    try:
+        result = str(asyncio.run(ppc(cc)))
+    except:
+        result = "Error"
+
+    status = "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅" if any(i in result.lower() for i in ["approved", "funds", "added", "purchase", "duplicate"]) else "𝐃𝐞𝐜𝐥𝐢𝐧𝐞𝐝 ❌"
+    return f"Card↯ <code>{cc}</code>\nStatus - {status}\nResult -⤿ {result} ⤾\n"
+
 def process_mass_command(message, processing_msg):
     user_id = message.from_user.id
     current_time = time.time()
 
-    # Extract CC details
-    if message.reply_to_message:
-        card_details = message.reply_to_message.text.strip()
-    else:
-        card_details = message.text[5:].strip()
-    
-    cards = [cc.strip() for cc in card_details.split('\n') if cc.strip()]
-    valid_cards = [validate_cc(cc) for cc in cards]
-    valid_cards = [cc for cc in valid_cards if cc][:7]  # Limit to 25 cards
-
-    if not valid_cards:
-        bot.edit_message_text("⚠️ ᴄᴄ ɴᴏᴛ ғᴏᴜɴᴅ\n\nɴᴏ ᴄᴄ ᴅᴇᴛᴀɪʟs ᴡᴇʀᴇ ғᴏᴜɴᴅ ɪɴ ʏᴏᴜʀ ɪɴᴘᴜᴛ. ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴠᴀʟɪᴅ ᴄᴄ ᴅᴇᴛᴀɪʟs ᴛᴏ ᴘʀᴏᴄᴇᴇᴅ.\n\nᴜsᴀɢᴇ: /mass ᴄᴄ|ᴍᴇs|ᴀɴᴏ|ᴄᴠᴠ", 
-                            chat_id=message.chat.id, message_id=processing_msg.message_id)
-        return  
-
-    # Apply rate limit for .mass
     if user_id in mass_last_used and (current_time - mass_last_used[user_id]) < 80:
-        remaining_time = int(80 - (current_time - mass_last_used[user_id]))
-        bot.edit_message_text(f"⏳ Please wait {remaining_time} seconds before using .mass again.", 
-                            chat_id=message.chat.id, message_id=processing_msg.message_id)
+        wait = int(80 - (current_time - mass_last_used[user_id]))
+        bot.edit_message_text(f"⏳ Please wait {wait}s before using .mass again.", chat_id=message.chat.id, message_id=processing_msg.message_id)
         return
 
     mass_last_used[user_id] = current_time
 
-    start_time = time.time()
-    batch_results = ["↯ Stripe Auth\n"]
+    text = message.reply_to_message.text if message.reply_to_message else message.text[5:]
+    cards = [validate_cc(i.strip()) for i in text.strip().split('\n') if i.strip()]
+    cards = [c for c in cards if c][:7]
 
-    for cc in valid_cards:
-        batch_results.append(process_card_mass(cc))  # Use process_card_mass with st()
+    if not cards:
+        bot.edit_message_text("⚠️ ɴᴏ ᴠᴀʟɪᴅ ᴄᴄ ꜰᴏᴜɴᴅ.\nᴜsᴀɢᴇ: /mass ᴄᴄ|ᴍᴇs|ᴀɴᴏ|ᴄᴠᴠ", chat_id=message.chat.id, message_id=processing_msg.message_id)
+        return
 
-    # Calculate execution time
-    end_time = time.time()
-    total_execution_time = end_time - start_time
-    total_hours = int(total_execution_time // 3600)
-    total_minutes = int((total_execution_time % 3600) // 60)
-    total_seconds = total_execution_time % 60
+    result = ["↯ Stripe ᴀᴜᴛʜ ♻️\n"]
+    start = time.time()
+    for cc in cards:
+        result.append(process_card_mass(cc))
+    elapsed = time.time() - start
+    result.append(f"- 𝗧𝗶𝗺𝗲 - {elapsed:.2f}s")
 
-    batch_results.append(f"- 𝗧𝗶𝗺𝗲 -  {total_hours}.h {total_minutes}.m {total_seconds:.2f}.s")
+    bot.edit_message_text("\n".join(result), chat_id=message.chat.id, message_id=processing_msg.message_id, parse_mode="HTML")
 
-    bot.edit_message_text("\n".join(batch_results), chat_id=message.chat.id, 
-                         message_id=processing_msg.message_id, parse_mode="HTML")
-
-@bot.message_handler(func=lambda message: message.text.lower().startswith('.mass') or message.text.lower().startswith('/mass'))
+@bot.message_handler(func=lambda m: m.text.lower().startswith(('.mass', '/mass')))
 def respond_to_mass(message):
-    processing_msg = bot.reply_to(message, "- 𝐆𝐚𝐭𝐞𝐰𝐚𝐲 -  sᴛʀɪᴘᴇ Auth\n- 𝐒𝐭𝐚𝐭𝐮𝐬 - Processing...⌛️", parse_mode="HTML")
-    threading.Thread(target=process_mass_command, args=(message, processing_msg)).start()
+    if not is_user_joined(message.from_user.id):
+        send_join_message(message)
+        return
+    msg = bot.reply_to(message, "- 𝐆𝐚𝐭𝐞𝐰𝐚𝐲 -  Stripe ᴀᴜᴛʜ ♻️\n- 𝐒𝐭𝐚𝐭𝐮𝐬 - Processing...⌛️", parse_mode="HTML")
+    threading.Thread(target=process_mass_command, args=(message, msg)).start()
 
 
 print("Bot is running...")
