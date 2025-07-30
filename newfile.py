@@ -1225,7 +1225,7 @@ def process_card_mass(cc):
     except:
         result = "Error"
 
-    status = "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅" if any(i in result.lower() for i in ["approved", "funds", "added", "purchase", "duplicate"]) else "𝐃𝐞𝐜𝐥𝐢𝐧𝐞𝐝 ❌"
+    status = "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅" if any(i in result.lower() for i in ["approved", "funds", "added", "purchase", "duplicate", " avs"]) else "𝐃𝐞𝐜𝐥𝐢𝐧𝐞𝐝 ❌"
     return f"Card↯ <code>{cc}</code>\nStatus - {status}\nResult -⤿ {result} ⤾\n"
 
 def process_mass_command(message, processing_msg):
