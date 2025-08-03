@@ -572,6 +572,202 @@ def cmd_mbin(message):
     except Exception as e:
         bot.reply_to(message, f"⚠️ Error: {e}")
 
+from datetime import datetime
+import threading
+import time
+import requests
+import telebot
+from telebot import types
+import os
+import csv
+import pycountry
+import re
+
+
+
+
+import time
+import threading
+import re
+from telebot import types
+from ppc import ppc
+import asyncio
+
+
+import csv
+
+# --- Load BIN Info from CSV ---
+def get_bin_info_from_csv(bin_number):
+    try:
+        with open("bin.csv", newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                if row['bin'].startswith(bin_number):
+                    return {
+                        'brand': row.get('brand', 'Unknown'),
+                        'type': row.get('type', 'Unknown'),
+                        'country': row.get('country', 'Unknown'),
+                        'flag': row.get('flag', '🏳️'),
+                        'bank': row.get('bank', 'Unknown'),
+                        'level': row.get('level', 'Unknown')
+                    }
+    except:
+        pass
+    return None
+
+# --- Updated is_valid_cc_format function (no change) ---
+def is_valid_cc_format(line):
+    pattern = r'^\d{15,16}\|\d{2}\|\d{2,4}\|\d{3}$'
+    return bool(re.match(pattern, line.strip()))
+
+# --- Rate limit tracker ---
+last_execution_b3txt = {}
+stopuser = {}
+
+def check_rate_limit_b3txt(user_id):
+    current_time = time.time()
+    last_time = last_execution_b3txt.get(str(user_id), 0)
+    if current_time - last_time < 60:
+        return False, 60 - (current_time - last_time)
+    last_execution_b3txt[str(user_id)] = current_time
+    return True, 0
+
+@bot.message_handler(commands=['ustxt'], func=lambda m: m.reply_to_message and m.reply_to_message.document)
+@bot.message_handler(regexp=r'^\.ustxt', func=lambda m: m.reply_to_message and m.reply_to_message.document)
+def handle_b3txt_command(message):
+    user_id = message.from_user.id
+
+    try:
+        file_info = bot.get_file(message.reply_to_message.document.file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
+        input_text = downloaded_file.decode('utf-8', errors='ignore')
+
+        cards = []
+        for cc in input_text.split('\n'):
+            try:
+                x = re.findall(r'\d+', cc)
+                if len(x) >= 4:
+                    ccn, mm, yy, cvv = x[0], x[1], x[2], x[3]
+                    if mm.startswith('2'): mm, yy = yy, mm
+                    if len(mm) >= 3: mm, yy, cvv = yy, cvv, mm
+                    if len(yy) == 4: yy = yy[-2:]
+                    formatted = f"{ccn}|{mm}|{yy}|{cvv}"
+                    if is_valid_cc_format(formatted):
+                        cards.append(formatted)
+            except:
+                continue
+
+        if not cards:
+            bot.reply_to(message, "𝐈𝐧𝐯𝐚𝐥𝐢𝐝 Data ⚠️\n\n𝐌𝐞𝐬𝐬𝐚𝐠𝐞: 𝐍𝐨 𝐕𝐚𝐥𝐢𝐝 𝐃𝐚𝐭𝐚", parse_mode="HTML")
+            return
+
+        # Only apply rate limit if cards were found
+        can_proceed, wait_time = check_rate_limit_b3txt(user_id)
+        if not can_proceed:
+            bot.reply_to(message, f"⏳ Please wait {wait_time:.1f} seconds before trying /b3txt again.", parse_mode="HTML")
+            return
+
+        stopuser[str(user_id)] = {'status': 'start'}
+        msg = bot.reply_to(message, "𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙔𝙤𝙪𝙧 𝘾𝙖𝙧𝙙𝙨...⌛", parse_mode="HTML")
+        threading.Thread(target=process_cards, args=(message, msg.message_id, cards, user_id)).start()
+
+    except Exception:
+        bot.reply_to(message, "𝐄𝐫𝐫𝐨𝐫 ⚠️\n\n𝐔𝐧𝐚𝐛𝐥𝐞 𝐭𝐨 𝐫𝐞𝐚𝐝 𝐭𝐡𝐞 𝐟𝐢𝐥𝐞.", parse_mode="HTML")
+
+
+def process_cards(message, message_id, cards, user_id):
+    approved = 0
+    declined = 0
+    total = len(cards)
+    checked_cards = set()
+
+    for cc in cards:
+        cc = cc.strip()
+        if not cc or cc in checked_cards:
+            continue
+
+        if stopuser.get(str(user_id), {}).get('status') == 'stop':
+            bot.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message_id,
+                text=f"𝗦𝗧𝗢𝗣𝗣𝗘𝗗 ✅\n'\nApproved: {approved}",
+                parse_mode="HTML"
+            )
+            return
+
+        start_time = time.time()
+        try:
+            result = str(asyncio.run(ppc(cc)))
+        except Exception:
+            result = "Error"
+        execution_time = time.time() - start_time
+
+        bin_info = get_bin_info_from_csv(cc[:6])
+        if bin_info:
+            brand = bin_info['brand']
+            card_type = bin_info['type']
+            country = bin_info['country']
+            country_flag = bin_info['flag']
+            bank = bin_info['bank']
+            level = bin_info['level']
+        else:
+            brand = card_type = country = country_flag = bank = level = 'Unknown'
+
+        if any(x in result.lower() for x in ["funds", "invalid postal", "avs", "added", "duplicate", "approved", "purchase"]):
+            approved += 1
+            msg = f'''<b>𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅
+
+𝗖𝗮𝗿𝗱: <code>{cc}</code>
+𝐆𝐚𝐭𝐞𝐰𝐚𝐲: B3 AUTH PLAY
+𝐑𝐞𝐬𝐩𝗼𝗻𝐬𝗲: {result}
+
+𝗜𝗻𝗳𝗼: <code>{cc[:6]} - {card_type} - {brand} - {level}</code>
+𝐈𝐬𝐬𝐮𝐞𝐫: {bank}
+𝐂𝐨𝐮𝐧𝐭𝐫𝐲: <code>{country} - {country_flag}</code>
+
+𝗧𝗶𝗺𝗲: {execution_time:.2f} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬
+</b>'''
+            bot.send_message(message.chat.id, msg, parse_mode="HTML")
+        else:
+            declined += 1
+
+        keyboard = types.InlineKeyboardMarkup(row_width=1)
+        keyboard.add(
+            types.InlineKeyboardButton(f"{cc}", callback_data="noop"),
+            types.InlineKeyboardButton(f"Status ➜ {result}", callback_data="noop"),
+            types.InlineKeyboardButton(f"𝗔𝗽𝗽𝗿𝗼𝘃𝗲𝗱 ✅ ➜  {approved}", callback_data="noop"),
+            types.InlineKeyboardButton(f"𝗗𝗲𝗰𝗹𝗶𝗻𝗲 💀 ➜  {declined}", callback_data="noop"),
+            types.InlineKeyboardButton(f"Total ♻ ➜ {total}", callback_data="noop"),
+            types.InlineKeyboardButton("Stop", callback_data=f"stop_{user_id}")
+        )
+        bot.edit_message_text(
+            chat_id=message.chat.id,
+            message_id=message_id,
+            text=f"𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝗖𝗮𝗿𝗱 <code>{cc}</code>\nGate ➜ <b>B3 AUTH PLAY</b>",
+            reply_markup=keyboard,
+            parse_mode="HTML"
+        )
+
+        time.sleep(4)
+        checked_cards.add(cc)
+
+    if stopuser.get(str(user_id), {}).get('status') != 'stop':
+        bot.edit_message_text(
+            chat_id=message.chat.id,
+            message_id=message_id,
+            text=f"𝙏𝙊𝙏𝘼𝙇 𝘾𝙃𝙀𝘾𝙆 𝗖𝗢𝗠𝗣𝗟𝗘𝗧𝗘𝗗 ✅ ✅\n\nApproved: {approved}",
+            parse_mode="HTML"
+        )
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('stop_'))
+def handle_stop(call):
+    user_id = call.data.split('_')[1]
+    stopuser[str(user_id)]['status'] = 'stop'
+    bot.answer_callback_query(call.id, "Stopping...")
+
+
+    
+
 
 
 import telebot
