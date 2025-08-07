@@ -619,7 +619,7 @@ def check_rate_limit_b3txt(user_id):
     return True, 0
     
     
-co_admins = [6019604170, 5995041264, 8009385011, 5397269434]    
+co_admins = [6019504170, 5995041264, 8009385011, 5397269434]    
 
 # --- Command Handler ---
 @bot.message_handler(commands=['ustxt'], func=lambda m: m.reply_to_message and m.reply_to_message.document)
