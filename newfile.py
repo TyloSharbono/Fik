@@ -574,7 +574,6 @@ def cmd_mbin(message):
 
 
 
-
 from telebot import TeleBot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import csv, re, time, threading, asyncio
@@ -608,6 +607,10 @@ def is_valid_cc_format(line):
 # Track active checks per user
 active_checks = {}
 stopuser = {}
+
+# --- Main Handler for both commands ---
+# Stop flags store with unique key per check
+stopuser = {}  # key: f"{user_id}_{message_id}", value: status
 
 # --- Main Handler for both commands ---
 @bot.message_handler(commands=['ustxt'])
@@ -651,8 +654,7 @@ def handle_ustxt_command(message):
             except:
                 continue
 
-        # Limit to 1000 cards max
-        cards = cards[:1000]
+        cards = cards[:1000]  # Limit to 1000 cards
 
         if not cards:
             bot.reply_to(message,
@@ -662,25 +664,29 @@ def handle_ustxt_command(message):
             )
             return
 
-        # Track active check
         active_checks[user_id] = active_checks.get(user_id, 0) + 1
-        stopuser[user_id] = {'status': 'start'}
 
         msg = bot.reply_to(message, f"𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙔𝙤𝙪𝙧 {len(cards)}  𝘾𝙖𝙧𝙙𝙨...⌛", parse_mode="HTML")
-        threading.Thread(target=process_cards, args=(message, msg.message_id, cards, user_id)).start()
+
+        # Unique stop key for this check
+        stop_key = f"{user_id}_{msg.message_id}"
+        stopuser[stop_key] = {'status': 'start'}
+
+        threading.Thread(target=process_cards, args=(message, msg.message_id, cards, user_id, stop_key)).start()
 
     except Exception:
         bot.reply_to(message, "⚠️ Unable to read the file.", parse_mode="HTML")
 
+
 # --- Card Processing Thread ---
-def process_cards(message, message_id, cards, user_id):
+def process_cards(message, message_id, cards, user_id, stop_key):
     approved = 0
     declined = 0
     total = len(cards)
     checked_cards = set()
 
     for cc in cards:
-        if stopuser.get(user_id, {}).get('status') == 'stop':
+        if stopuser.get(stop_key, {}).get('status') == 'stop':
             bot.edit_message_text(
                 chat_id=message.chat.id,
                 message_id=message_id,
@@ -696,7 +702,7 @@ def process_cards(message, message_id, cards, user_id):
 
         start_time = time.time()
         try:
-            result = str(Gele(cc)) # your checker function
+            result = str(Gele(cc))
         except Exception:
             result = "Error"
         execution_time = time.time() - start_time
@@ -724,13 +730,10 @@ def process_cards(message, message_id, cards, user_id):
 𝗧𝗶𝗺𝗲: {execution_time:.2f} seconds
 </b>'''
             sent_msg = bot.send_message(message.chat.id, msg, parse_mode="HTML")
-
-            # Try pinning approved message
             try:
                 bot.pin_chat_message(message.chat.id, sent_msg.message_id)
             except:
                 pass
-
         else:
             declined += 1
 
@@ -741,7 +744,7 @@ def process_cards(message, message_id, cards, user_id):
             InlineKeyboardButton(f"Approved ✅ ➜ {approved}", callback_data="noop"),
             InlineKeyboardButton(f"Declined 💀 ➜ {declined}", callback_data="noop"),
             InlineKeyboardButton(f"Total ♻ ➜ {total}", callback_data="noop"),
-            InlineKeyboardButton("Stop", callback_data=f"stop_{user_id}")
+            InlineKeyboardButton("Stop", callback_data=f"stop_{user_id}_{message_id}")
         )
 
         bot.edit_message_text(
@@ -763,18 +766,20 @@ def process_cards(message, message_id, cards, user_id):
     )
     active_checks[user_id] -= 1
 
+
 # --- Stop Button Handler ---
 @bot.callback_query_handler(func=lambda call: call.data.startswith('stop_'))
 def handle_stop(call):
-    user_id = call.data.split('_')[1]
+    _, user_id, msg_id = call.data.split('_', 2)
+    stop_key = f"{user_id}_{msg_id}"
+
     if call.from_user.id == int(user_id):  # only owner can stop
-        stopuser[user_id]['status'] = 'stop'
+        stopuser[stop_key]['status'] = 'stop'
         bot.answer_callback_query(call.id, "Stopping your check...")
     else:
         bot.answer_callback_query(call.id, "❌ You can't stop someone else's check.")
-    
 
-    
+          
 
 
 
