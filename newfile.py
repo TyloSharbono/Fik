@@ -577,9 +577,8 @@ def cmd_mbin(message):
 
 from telebot import TeleBot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-
-from ppc import ppc  # Make sure ppc is correctly defined in your project
-
+import csv, re, time, threading, asyncio
+from pikachu import Gele
 
 
 # --- Load BIN Info from CSV ---
@@ -601,34 +600,35 @@ def get_bin_info_from_csv(bin_number):
         pass
     return None
 
-# --- Check if CC format is valid ---
+# --- CC format check ---
 def is_valid_cc_format(line):
     pattern = r'^\d{15,16}\|\d{2}\|\d{2,4}\|\d{3}$'
     return bool(re.match(pattern, line.strip()))
 
-# --- Rate Limit Tracker ---
-last_execution_b3txt = {}
+# Track active checks per user
+active_checks = {}
 stopuser = {}
 
-def check_rate_limit_b3txt(user_id):
-    current_time = time.time()
-    last_time = last_execution_b3txt.get(str(user_id), 0)
-    if current_time - last_time < 60:
-        return False, 60 - (current_time - last_time)
-    last_execution_b3txt[str(user_id)] = current_time
-    return True, 0
-    
-    
-co_admins = [6019504170, 5995041264, 8009385011, 5397269434]    
+# --- Main Handler for both commands ---
+@bot.message_handler(commands=['ustxt'])
+@bot.message_handler(regexp=r'^\.ustxt')
+def ustxt_cmd(message):
+    if not (message.reply_to_message and message.reply_to_message.document):
+        bot.reply_to(message,
+            "ɢᴀᴛᴇ ɴᴀᴍᴇ: sᴛʀɪᴘᴇ ᴀᴜᴛʜ ♻️\n\n"
+            "ᴍᴇssᴀɢᴇ: ɴᴏ ᴄᴄ ғᴏᴜɴᴅ ᴏʀ ɪɴᴄᴏʀʀᴇᴄᴛ ғᴏʀᴍᴀᴛ ❌\n\n"
+            "ᴜsᴀɢᴇ: /ustxt [ reply to fileLimited 1K ]"
+        )
+        return
+    handle_ustxt_command(message)
 
-# --- Command Handler ---
-@bot.message_handler(commands=['ustxt'], func=lambda m: m.reply_to_message and m.reply_to_message.document)
-@bot.message_handler(regexp=r'^\.ustxt', func=lambda m: m.reply_to_message and m.reply_to_message.document)
+# --- Actual Processing Start ---
 def handle_ustxt_command(message):
-    user_id = message.from_user.id
+    user_id = str(message.from_user.id)
 
-    if user_id not in co_admins:
-        bot.reply_to(message, "❌ You are not authorized to use this command.", parse_mode="HTML")
+    # Allow max 2 checks per user
+    if active_checks.get(user_id, 0) >= 2:
+        bot.reply_to(message, "⚠️ You already have 2 active checks running. Please wait for one to finish.")
         return
 
     try:
@@ -651,21 +651,26 @@ def handle_ustxt_command(message):
             except:
                 continue
 
+        # Limit to 1000 cards max
+        cards = cards[:1000]
+
         if not cards:
-            bot.reply_to(message, "𝐈𝐧𝐯𝐚𝐥𝐢𝐝 Data ⚠️\n\n𝐌𝐞𝐬𝐬𝐚𝐠𝐞: 𝐍𝐨 𝐕𝐚𝐥𝐢𝐝 𝐃𝐚𝐭𝐚", parse_mode="HTML")
+            bot.reply_to(message,
+                "ɢᴀᴛᴇ ɴᴀᴍᴇ: sᴛʀɪᴘᴇ ᴀᴜᴛʜ ♻️\n\n"
+                "ᴍᴇssᴀɢᴇ: ɴᴏ ᴄᴄ ғᴏᴜɴᴅ ᴏʀ ɪɴᴄᴏʀʀᴇᴄᴛ ғᴏʀᴍᴀᴛ ❌\n\n"
+                "ᴜsᴀɢᴇ: /ustxt [ reply to fileLimited 1K ]"
+            )
             return
 
-        can_proceed, wait_time = check_rate_limit_b3txt(user_id)
-        if not can_proceed:
-            bot.reply_to(message, f"⏳ Please wait {wait_time:.1f} seconds before trying /b3txt again.", parse_mode="HTML")
-            return
+        # Track active check
+        active_checks[user_id] = active_checks.get(user_id, 0) + 1
+        stopuser[user_id] = {'status': 'start'}
 
-        stopuser[str(user_id)] = {'status': 'start'}
-        msg = bot.reply_to(message, "𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙔𝙤𝙪𝙧 𝘾𝙖𝙧𝙙𝙨...⌛", parse_mode="HTML")
+        msg = bot.reply_to(message, f"𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙔𝙤𝙪𝙧 {len(cards)}  𝘾𝙖𝙧𝙙𝙨...⌛", parse_mode="HTML")
         threading.Thread(target=process_cards, args=(message, msg.message_id, cards, user_id)).start()
 
     except Exception:
-        bot.reply_to(message, "𝐄𝐫𝐫𝐨𝐫 ⚠️\n\n𝐔𝐧𝐚𝐛𝐥𝐞 𝐭𝐨 𝐫𝐞𝐚𝐝 𝐭𝐡𝐞 𝐟𝐢𝐥𝐞.", parse_mode="HTML")
+        bot.reply_to(message, "⚠️ Unable to read the file.", parse_mode="HTML")
 
 # --- Card Processing Thread ---
 def process_cards(message, message_id, cards, user_id):
@@ -675,52 +680,57 @@ def process_cards(message, message_id, cards, user_id):
     checked_cards = set()
 
     for cc in cards:
+        if stopuser.get(user_id, {}).get('status') == 'stop':
+            bot.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message_id,
+                text=f"Stopped ✅\nApproved: {approved}",
+                parse_mode="HTML"
+            )
+            active_checks[user_id] -= 1
+            return
+
         cc = cc.strip()
         if not cc or cc in checked_cards:
             continue
 
-        if stopuser.get(str(user_id), {}).get('status') == 'stop':
-            bot.edit_message_text(
-                chat_id=message.chat.id,
-                message_id=message_id,
-                text=f"𝗦𝗧𝗢𝗣𝗣𝗘𝗗 ✅\n\nApproved: {approved}",
-                parse_mode="HTML"
-            )
-            return
-
         start_time = time.time()
         try:
-            result = str(asyncio.run(ppc(cc)))
+            result = str(Gele(cc)) # your checker function
         except Exception:
             result = "Error"
         execution_time = time.time() - start_time
 
-        bin_info = get_bin_info_from_csv(cc[:6])
-        if bin_info:
-            brand = bin_info['brand']
-            card_type = bin_info['type']
-            country = bin_info['country']
-            country_flag = bin_info['flag']
-            bank = bin_info['bank']
-            level = bin_info['level']
-        else:
-            brand = card_type = country = country_flag = bank = level = 'Unknown'
+        bin_info = get_bin_info_from_csv(cc[:6]) or {}
+        brand = bin_info.get('brand', 'Unknown')
+        card_type = bin_info.get('type', 'Unknown')
+        country = bin_info.get('country', 'Unknown')
+        country_flag = bin_info.get('flag', '🏳️')
+        bank = bin_info.get('bank', 'Unknown')
+        level = bin_info.get('level', 'Unknown')
 
         if any(x in result.lower() for x in ["funds", "invalid postal", "avs", "added", "duplicate", "approved", "purchase"]):
             approved += 1
-            msg = f'''<b>𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅
+            msg = f'''<b>Approved ✅
 
 𝗖𝗮𝗿𝗱: <code>{cc}</code>
-𝐆𝐚𝐭𝐞𝐰𝐚𝐲: B3 AUTH PLAY
-𝐑𝐞𝐬𝐩𝗼𝗻𝐬𝗲: {result}
+𝐆𝐚𝐭𝐞𝐰𝐚𝐲: STRIPE AUTH PLAY
+𝐑𝐞𝐬𝗽𝗼𝗻𝐬𝗲: {result}
 
 𝗜𝗻𝗳𝗼: <code>{cc[:6]} - {card_type} - {brand} - {level}</code>
 𝐈𝐬𝐬𝐮𝐞𝐫: {bank}
 𝐂𝐨𝐮𝐧𝐭𝐫𝐲: <code>{country} - {country_flag}</code>
 
-𝗧𝗶𝗺𝗲: {execution_time:.2f} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬
+𝗧𝗶𝗺𝗲: {execution_time:.2f} seconds
 </b>'''
-            bot.send_message(message.chat.id, msg, parse_mode="HTML")
+            sent_msg = bot.send_message(message.chat.id, msg, parse_mode="HTML")
+
+            # Try pinning approved message
+            try:
+                bot.pin_chat_message(message.chat.id, sent_msg.message_id)
+            except:
+                pass
+
         else:
             declined += 1
 
@@ -728,8 +738,8 @@ def process_cards(message, message_id, cards, user_id):
         keyboard.add(
             InlineKeyboardButton(f"{cc}", callback_data="noop"),
             InlineKeyboardButton(f"Status ➜ {result}", callback_data="noop"),
-            InlineKeyboardButton(f"𝗔𝗽𝗽𝗿𝗼𝘃𝗲𝗱 ✅ ➜  {approved}", callback_data="noop"),
-            InlineKeyboardButton(f"𝗗𝗲𝗰𝗹𝗶𝗻𝗲 💀 ➜  {declined}", callback_data="noop"),
+            InlineKeyboardButton(f"Approved ✅ ➜ {approved}", callback_data="noop"),
+            InlineKeyboardButton(f"Declined 💀 ➜ {declined}", callback_data="noop"),
             InlineKeyboardButton(f"Total ♻ ➜ {total}", callback_data="noop"),
             InlineKeyboardButton("Stop", callback_data=f"stop_{user_id}")
         )
@@ -737,7 +747,7 @@ def process_cards(message, message_id, cards, user_id):
         bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message_id,
-            text=f"𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝗖𝗮𝗿𝗱 <code>{cc}</code>\nGate ➜ <b>B3 AUTH PLAY</b>",
+            text=f"Checking Card <code>{cc}</code>\nGate ➜ <b>STRIPE AUTH PLAY</b>",
             reply_markup=keyboard,
             parse_mode="HTML"
         )
@@ -745,21 +755,24 @@ def process_cards(message, message_id, cards, user_id):
         time.sleep(4)
         checked_cards.add(cc)
 
-    if stopuser.get(str(user_id), {}).get('status') != 'stop':
-        bot.edit_message_text(
-            chat_id=message.chat.id,
-            message_id=message_id,
-            text=f"𝙏𝙊𝙏𝘼𝙇 𝘾𝙃𝙀𝘾𝙆 𝗖𝗢𝗠𝗣𝗟𝗘𝗧𝗘𝗗 ✅ ✅\n\nApproved: {approved}",
-            parse_mode="HTML"
-        )
+    bot.edit_message_text(
+        chat_id=message.chat.id,
+        message_id=message_id,
+        text=f"Check Completed ✅\nApproved: {approved}",
+        parse_mode="HTML"
+    )
+    active_checks[user_id] -= 1
 
 # --- Stop Button Handler ---
 @bot.callback_query_handler(func=lambda call: call.data.startswith('stop_'))
 def handle_stop(call):
     user_id = call.data.split('_')[1]
-    stopuser[str(user_id)]['status'] = 'stop'
-    bot.answer_callback_query(call.id, "Stopping...")
-
+    if call.from_user.id == int(user_id):  # only owner can stop
+        stopuser[user_id]['status'] = 'stop'
+        bot.answer_callback_query(call.id, "Stopping your check...")
+    else:
+        bot.answer_callback_query(call.id, "❌ You can't stop someone else's check.")
+    
 
     
 
