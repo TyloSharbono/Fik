@@ -66,19 +66,22 @@ def help_command(message):
     bot.reply_to(message, help_msg, parse_mode='HTML')
     
 @bot.message_handler(commands=['list'])
+@bot.message_handler(commands=['list'])
 def send_command_list(message):
     msg = '''<b>📋 Available Commands:</b>
 
 🔍 <b>Check Tools:</b>
 • <code>/chk</code> – B3 Auth Checker  
-• <code>/mchk</code> – Misc Auth Checker  
+• <code>/mchk</code> – mass Auth Checker  
 • <code>/au</code> – Stripe Auth  
+• <code>/mass</code> – Mass stripe 
+• <code>/ustxt</code> – Mass Stripe File   
 
 ⚙️ <b>Generators:</b>
 • <code>/gen</code> – Generator  
-• <code>/mass</code> – Mass Gen  
-
+ 
 💳 <b>BIN Tools:</b>
+• <code>/fl</code> – Filter CC
 • <code>/bin</code> – Lookhub BIN  
 • <code>/mbin</code> – More BIN Tools  
 
