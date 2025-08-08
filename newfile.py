@@ -72,7 +72,7 @@ def send_command_list(message):
 
 🔍 <b>Check Tools:</b>
 • <code>/chk</code> – B3 Auth Checker  
-• <code>/mchk</code> – mass Auth Checker  
+• <code>/cchk</code> – mass Auth Checker  
 • <code>/au</code> – Stripe Auth  
 • <code>/mass</code> – Mass stripe 
 • <code>/ustxt</code> – Mass Stripe File   
