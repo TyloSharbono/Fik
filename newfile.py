@@ -505,7 +505,7 @@ def process_sh_cmds(message, processing_sh_id, cc):
     execution_time = time.time() - start_time
 
     # --- Response messages ---
-    msg = f'''<b>𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅
+    msg = f'''<b>𝘾𝙃𝘼𝙍𝙂𝙀𝘿 💎
 
 𝗖𝗮𝗿𝗱: <code>{cc}</code>
 𝐆𝐚𝐭𝐞𝐰𝐚𝐲: {gate}
@@ -532,7 +532,7 @@ def process_sh_cmds(message, processing_sh_id, cc):
 </b>'''
 
     # --- Success keyword check ---
-    if any(x in last.lower() for x in ['funds', 'invalid postal', 'avs', 'added', 'duplicate', 'approved', 'allowed', 'purchase','Charge']):
+    if any(x in last.lower() for x in ['funds', 'invalid postal', 'avs', 'added', 'duplicate', 'approved', 'allowed', 'purchase','Charge','Confirm']):
         bot.edit_message_text(chat_id=message.chat.id, message_id=processing_sh_id, text=msg, parse_mode="HTML")
     else:
         bot.edit_message_text(chat_id=message.chat.id, message_id=processing_sh_id, text=msgd, parse_mode="HTML")
