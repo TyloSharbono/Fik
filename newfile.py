@@ -368,7 +368,181 @@ def handle_gen(message):
         bot.send_document(message.chat.id, open(filename, 'rb'), caption=caption, parse_mode="HTML")
         os.remove(filename)  # Clean up file after sending
         
-        
+
+import threading
+import json
+import time
+import requests
+import telebot, types
+import os
+import csv
+import pycountry
+from Shopify import vbv 
+# Load the user’s plan from data.json (optional, can be removed if not needed)
+def get_user_plan(user_id):
+    with open('data.json', 'r') as file:
+        json_data = json.load(file)
+    return json_data.get(str(user_id), {}).get("plan", "𝗙𝗥𝗘𝗘")
+
+# Dictionary to store user command usage timestamps
+command_sh = {}
+
+
+CSV_FILE = 'bins_all.csv'
+
+def expand_bank_name(bank_name):
+    words = bank_name.split()
+    expanded_words = [BANK_NAME_FIXES.get(word, word) for word in words]  # Assuming BANK_NAME_FIXES is defined
+    return " ".join(expanded_words)
+
+def get_bin_info_from_csv(fbin):
+    if not os.path.exists(CSV_FILE):
+        return None  # CSV file not found
+    
+    try:
+        with open(CSV_FILE, mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row[0] == fbin:
+                    return {
+                        "bin": row[0],
+                        "country": row[1],
+                        "flag": row[2],
+                        "brand": row[3],
+                        "type": row[4],
+                        "level": row[5],
+                        "bank": expand_bank_name(row[6])  # Expand issuer name
+                    }
+    except Exception as e:
+        print(f"Error reading CSV: {e}")
+        return None
+    return None  # BIN not found
+
+def get_country_name(code, fallback_country_name):
+    try:
+        country = pycountry.countries.get(alpha_2=code)
+        return country.name if country else fallback_country_name
+    except Exception as e:
+        print(f"Error getting country name: {e}")
+        return fallback_country_name
+
+# --- .sh Command ---
+REQUIRED_CHANNEL = -1002311823274  # 🔁 Replace with your private channel ID
+
+@bot.message_handler(func=lambda message: message.text.lower().startswith('.sh') or message.text.lower().startswith('/sh'))
+def respond_to_vbv(message):
+    user_id = message.from_user.id
+
+    # --- Check user membership ---
+    try:
+        member = bot.get_chat_member(REQUIRED_CHANNEL, user_id)
+        if member.status not in ["member", "administrator", "creator"]:
+            raise Exception("Not a member")
+    except:
+        msg = '''<b>🤖 Bot Status: Active ✅
+
+🔴 ɪᴍᴘᴏʀᴛᴀɴᴛ ɴᴏᴛᴇ :
+
+🚨 To use this bot and stay updated — make sure to join our channel!
+<a href="https://t.me/hrefcm/111">&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; channel &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;</a>
+
+🆘 Need help?
+Use /help anytime for support.</b>'''
+        bot.reply_to(message, msg, parse_mode='HTML')
+        return
+
+    # --- Extract CC ---
+    try:
+        cc = message.reply_to_message.text if message.reply_to_message else message.text
+        cc = str(reg(cc))  # 🔁 Assumes reg() is defined
+    except:
+        cc = 'None'
+
+    if cc == 'None':
+        bot.reply_to(message, '''<b>ɢᴀᴛᴇ ɴᴀᴍᴇ: Shopify charge $0.98 ♻️
+
+ᴍᴇssᴀɢᴇ: ɴᴏ ᴄᴄ ғᴏᴜɴᴅ ɪɴ ʏᴏᴜʀ ɪɴᴘᴜᴛ ᴏʀ ɪɴᴄᴏʀʀᴇᴄᴛ ғᴏʀᴍᴀᴛ ❌
+
+ᴜsᴀɢᴇ: /sh ᴄᴄ|ᴍᴇs|ᴀɴᴏ|ᴄᴠᴠ</b>''', parse_mode="HTML")
+        return
+
+    # --- Rate Limit Check ---
+    current_tme = datetime.now()
+    last_sh = command_sh.get(user_id, None)
+
+    if last_sh and (current_tme - last_sh).seconds < 45:
+        remaining_time = 45 - (current_tme - last_sh).seconds
+        bot.reply_to(message, f"<b>Try again after {remaining_time} seconds.</b>", parse_mode="HTML")
+        return
+
+    command_sh[user_id] = current_tme
+    processing_sh = bot.reply_to(message, "𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙔𝙤𝙪𝙧 𝘾𝙖𝙧𝙙𝙨...⌛").message_id
+    threading.Thread(target=process_sh_cmds, args=(message, processing_sh, cc)).start()
+
+# --- Worker Function for CC Check ---
+def process_sh_cmds(message, processing_sh_id, cc):
+    gate = 'Shopify charge $0.98'
+    start_time = time.time()
+
+    try:
+        last = str(vbv(cc))  # 🔁 Assumes vbv() is defined
+    except Exception as e:
+        last = 'Error'
+
+    # --- BIN Info ---
+    bin_info = get_bin_info_from_csv(cc[:6])
+    if bin_info:
+        brand = bin_info.get('brand', 'Unknown')
+        card_type = bin_info.get('type', 'Unknown')
+        country = get_country_name(bin_info.get('country', 'Unknown'), 'Unknown')
+        country_flag = bin_info.get('flag', 'Unknown')
+        bank = bin_info.get('bank', 'Unknown')
+        level = bin_info.get('level', 'Unknown')
+    else:
+        brand = card_type = country = country_flag = bank = level = 'Unknown'
+
+    execution_time = time.time() - start_time
+
+    # --- Response messages ---
+    msg = f'''<b>𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅
+
+𝗖𝗮𝗿𝗱: <code>{cc}</code>
+𝐆𝐚𝐭𝐞𝐰𝐚𝐲: {gate}
+𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {last}
+
+𝗜𝗻𝗳𝗼: <code>{cc[:6]} - {card_type} - {brand} - {level}</code>
+𝐈𝐬𝐬𝐮𝐞𝐫: {bank}
+𝐂𝐨𝐮𝐧𝐭𝐫𝐲: <code>{country} - {country_flag}</code>
+
+𝗧𝗶𝗺𝗲: {execution_time:.2f} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬
+</b>'''
+
+    msgd = f'''<b>𝘿𝙚𝙘𝙡𝙞𝙣𝙚𝙙 ❌
+
+𝗖𝗮𝗿𝗱: <code>{cc}</code>
+𝐆𝐚𝐭𝐞𝐰𝐚𝐲: {gate}
+𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {last}
+
+𝗜𝗻𝗳𝗼: <code>{cc[:6]} - {card_type} - {brand} - {level}</code>
+𝐈𝐬𝐬𝐮𝐞𝐫: {bank}
+𝐂𝐨𝐮𝐧𝐭𝐫𝐲: <code>{country} - {country_flag}</code>
+
+𝗧𝗶𝗺𝗲: {execution_time:.2f} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬
+</b>'''
+
+    # --- Success keyword check ---
+    if any(x in last.lower() for x in ['funds', 'invalid postal', 'avs', 'added', 'duplicate', 'approved', 'allowed', 'purchase','Charge']):
+        bot.edit_message_text(chat_id=message.chat.id, message_id=processing_sh_id, text=msg, parse_mode="HTML")
+    else:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=processing_sh_id, text=msgd, parse_mode="HTML")
+
+
+
+
+
+
+
+
 import telebot
 import csv
 import pycountry
