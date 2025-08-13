@@ -750,7 +750,7 @@ def vbv(ccx):
 
     if any(keyword in result for keyword in success_keywords):
         print("order is confirmed 🔥")
-        return "order is confirmed 🔥"
+        return "💵 Payment Confirm"
 
 # 🔐 Check for action required
     elif '"__typename":"ActionRequiredReceipt"' in result:
