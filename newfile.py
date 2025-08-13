@@ -76,6 +76,7 @@ def send_command_list(message):
 • <code>/au</code> – Stripe Auth  
 • <code>/mass</code> – Mass stripe 
 • <code>/ustxt</code> – Mass Stripe File   
+• <code>/sh</code> – Shopify charge $0.98 
 
 ⚙️ <b>Generators:</b>
 • <code>/gen</code> – Generator  
