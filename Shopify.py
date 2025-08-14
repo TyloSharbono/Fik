@@ -10,9 +10,10 @@ def vbv(ccx):
     session = requests.Session()
 
     proxies = [
-        "http://gvvzfpoo:tw5khb9uqerf@136.0.207.84:6661",
-        "http://799JRELTBPAE:F7BQ7D3EQSQA@175.29.133.8:5433"
-    ]
+    "http://gvvzfpoo:tw5khb9uqerf@136.0.207.84:6661",
+    "http://799JRELTBPAE:F7BQ7D3EQSQA@175.29.133.8:5433",
+    "http://tickets:proxyon145@107.173.112.194:12345"
+]
 
     # Choose one proxy randomly
     chosen_proxy = random.choice(proxies)
