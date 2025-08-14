@@ -85,9 +85,10 @@ def vbv(ccx):
 
     try:
         chk_token = response.json()["token"]
-        print("chk_token", chk_token)
+        #print("chk_token", chk_token)
     except:
         print("Faiked ")
+        return "Product failed"
        
     time.sleep(0.5)
     
@@ -143,6 +144,7 @@ def vbv(ccx):
         paymentMethodIdentifier is None
 ):
         print("Cart Checkout Failed")
+        return "Cart Checkout Failed"
     else:
         print("Checkout Tokens Found:")
         print("Session Token:", x_checkout_one_session_token)
@@ -190,7 +192,8 @@ def vbv(ccx):
     try:
         payment_session_id = response.json()["id"]
     except Exception as e:
-        print("Payment Session Creation Failed")
+       # print("Payment Session Creation Failed")
+        return "Payment Session Creation Failed"
     else:
         print(f'payment_session_id: {payment_session_id}')
 
@@ -769,5 +772,5 @@ def vbv(ccx):
             pass
 
             
-#vbv("5403758005151209|05|29|265")                                    
+#vbv("5148826203365002|02|27|225")                                    
 # Example usage
