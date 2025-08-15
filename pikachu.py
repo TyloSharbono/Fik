@@ -1,5 +1,5 @@
 import requests
-import requests
+import time
 import re
 import random
 
@@ -49,6 +49,7 @@ def Gele(ccx):
     else:
         #print("Login Nonce not found")
         return "Captcha detech"
+        time.sleep(1)
 
 
 
@@ -118,6 +119,7 @@ def Gele(ccx):
     else:
        # print("Nonce not found.")
         return "Api Need update"
+        time.sleep(1)
         
         
         
@@ -160,6 +162,7 @@ def Gele(ccx):
         response_json = response.json()
         id = response_json.get('id', 'No id found')
        # print(f"Payment source created successfully. ID: {id}") 
+        time.sleep(1)
         
                        
                                                      
@@ -187,7 +190,10 @@ def Gele(ccx):
     'wcpay-payment-method': id,  # Your Stripe Payment Method ID
     '_ajax_nonce': nonce  # Must be valid for your session and page
 }
-    response = session.post('https://johnnysbackyard.co.uk/wp-admin/admin-ajax.php',  headers=headers, data=payload)                                
+    response = session.post('https://johnnysbackyard.co.uk/wp-admin/admin-ajax.php',  headers=headers, data=payload)   
+    time.sleep(1)
+     
+                                                                                                                           
     
 
 
