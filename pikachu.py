@@ -3,7 +3,7 @@ import requests
 import re
 import random
 
-def Tele(ccx):
+def Gele(ccx):
     ccx = ccx.strip()
     n = ccx.split("|")[0]
     mm = ccx.split("|")[1]
