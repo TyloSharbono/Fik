@@ -807,9 +807,7 @@ def is_valid_cc_format(line):
 active_checks = {}
 stopuser = {}
 
-# --- Main Handler for both commands ---
-# Stop flags store with unique key per check
-stopuser = {}  # key: f"{user_id}_{message_id}", value: status
+
 
 # --- Main Handler for both commands ---
 @bot.message_handler(commands=['ustxt'])
@@ -853,13 +851,13 @@ def handle_ustxt_command(message):
             except:
                 continue
 
-        cards = cards[:1000]  # Limit to 1000 cards
+        cards = cards[:10000]  # Limit to 10000 cards
 
         if not cards:
             bot.reply_to(message,
                 "ɢᴀᴛᴇ ɴᴀᴍᴇ: sᴛʀɪᴘᴇ ᴀᴜᴛʜ ♻️\n\n"
                 "ᴍᴇssᴀɢᴇ: ɴᴏ ᴄᴄ ғᴏᴜɴᴅ ᴏʀ ɪɴᴄᴏʀʀᴇᴄᴛ ғᴏʀᴍᴀᴛ ❌\n\n"
-                "ᴜsᴀɢᴇ: /ustxt [ reply to file Limited 1K ]"
+                "ᴜsᴀɢᴇ: /ustxt [ reply to file Limited 10K ]"
             )
             return
 
@@ -871,52 +869,67 @@ def handle_ustxt_command(message):
         stop_key = f"{user_id}_{msg.message_id}"
         stopuser[stop_key] = {'status': 'start'}
 
-        threading.Thread(target=process_cards, args=(message, msg.message_id, cards, user_id, stop_key)).start()
+        threading.Thread(
+    target=process_cards, 
+    args=(message, msg.message_id, cards, user_id)
+).start()
+
 
     except Exception:
         bot.reply_to(message, "⚠️ Unable to read the file.", parse_mode="HTML")
 
 
 # --- Card Processing Thread ---
-def process_cards(message, message_id, cards, user_id, stop_key):
+def process_cards(message, message_id, cards, user_id):
     approved = 0
     declined = 0
+    otp_cards = 0
     total = len(cards)
     checked_cards = set()
+    start_all = time.time()
 
-    for cc in cards:
-        if stopuser.get(stop_key, {}).get('status') == 'stop':
-            bot.edit_message_text(
-                chat_id=message.chat.id,
-                message_id=message_id,
-                text=f"Stopped ✅\nApproved: {approved}",
-                parse_mode="HTML"
-            )
-            active_checks[user_id] -= 1
-            return
+    try:
+        for cc in cards:
+            if stopuser.get(user_id, {}).get('status') == 'stop':
+                elapsed = time.time() - start_all
+                bot.edit_message_text(
+                    chat_id=message.chat.id,
+                    message_id=message_id,
+                    text=f"Stopped ✅\n\n"
+                         f"Approved:   {approved}\n"
+                         f"Decline ❌: {declined}\n"
+                         f"3D card 💳: {otp_cards}\n"
+                         f"Check ☑: {len(checked_cards)}\n"
+                         f"Total ♻ : {total}\n"
+                         f"Time: {elapsed:.2f} sec",
+                    parse_mode="HTML"
+                )
+                return  # ⚠️ cleanup hoga finally me
 
-        cc = cc.strip()
-        if not cc or cc in checked_cards:
-            continue
+            cc = cc.strip()
+            if not cc or cc in checked_cards:
+                continue
 
-        start_time = time.time()
-        try:
-            result = str(Gele(cc))
-        except Exception:
-            result = "Error"
-        execution_time = time.time() - start_time
+            start_time = time.time()
+            try:
+                result = str(Gele(cc)) 
+            except Exception:
+                result = "Error"
+            execution_time = time.time() - start_time
 
-        bin_info = get_bin_info_from_csv(cc[:6]) or {}
-        brand = bin_info.get('brand', 'Unknown')
-        card_type = bin_info.get('type', 'Unknown')
-        country = bin_info.get('country', 'Unknown')
-        country_flag = bin_info.get('flag', '🏳️')
-        bank = bin_info.get('bank', 'Unknown')
-        level = bin_info.get('level', 'Unknown')
+            # --- BIN INFO
+            bin_info = get_bin_info_from_csv(cc[:6]) or {}
+            brand = bin_info.get('brand', 'Unknown')
+            card_type = bin_info.get('type', 'Unknown')
+            country = bin_info.get('country', 'Unknown')
+            country_flag = bin_info.get('flag', '🏳️')
+            bank = bin_info.get('bank', 'Unknown')
+            level = bin_info.get('level', 'Unknown')
 
-        if any(x in result.lower() for x in ["funds", "invalid postal", "avs", "added", "duplicate", "approved", "purchase"]):
-            approved += 1
-            msg = f'''<b>Approved ✅
+            # --- Categorize Result
+            if any(x in result.lower() for x in ["funds", "invalid postal", "avs", "added", "duplicate", "approved", "purchase"]):
+                approved += 1
+                msg = f'''<b>Approved ✅
 
 𝗖𝗮𝗿𝗱: <code>{cc}</code>
 𝐆𝐚𝐭𝐞𝐰𝐚𝐲: STRIPE AUTH PLAY
@@ -928,55 +941,78 @@ def process_cards(message, message_id, cards, user_id, stop_key):
 
 𝗧𝗶𝗺𝗲: {execution_time:.2f} seconds
 </b>'''
-            sent_msg = bot.send_message(message.chat.id, msg, parse_mode="HTML")
-            try:
-                bot.pin_chat_message(message.chat.id, sent_msg.message_id)
-            except:
-                pass
-        else:
-            declined += 1
+                sent_msg = bot.send_message(message.chat.id, msg, parse_mode="HTML")
+                try:
+                    bot.pin_chat_message(message.chat.id, sent_msg.message_id)
+                except:
+                    pass
 
-        keyboard = InlineKeyboardMarkup(row_width=1)
-        keyboard.add(
-            InlineKeyboardButton(f"{cc}", callback_data="noop"),
-            InlineKeyboardButton(f"Status ➜ {result}", callback_data="noop"),
-            InlineKeyboardButton(f"Approved ✅ ➜ {approved}", callback_data="noop"),
-            InlineKeyboardButton(f"Declined 💀 ➜ {declined}", callback_data="noop"),
-            InlineKeyboardButton(f"Total ♻ ➜ {total}", callback_data="noop"),
-            InlineKeyboardButton("Stop", callback_data=f"stop_{user_id}_{message_id}")
-        )
+            elif any(x in result.lower() for x in ["3d_required", "otp", "action_required","3d"]):
+                otp_cards += 1
+            else:
+                declined += 1
 
+            # --- Update Inline Buttons
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton(f"{cc}", callback_data="noop"),
+                InlineKeyboardButton(f"Status ➜ {result}", callback_data="noop"),
+                InlineKeyboardButton(f"Approved ✅ ➜ {approved}", callback_data="noop"),
+                InlineKeyboardButton(f"Declined 💀 ➜ {declined}", callback_data="noop"),
+                InlineKeyboardButton(f"3D Card 💳 ➜ {otp_cards}", callback_data="noop"),
+                InlineKeyboardButton(f"Total ♻ ➜ {len(checked_cards)}/{total}", callback_data="noop"),
+                InlineKeyboardButton("Stop", callback_data=f"stop_{user_id}")
+            )
+
+            bot.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=message_id,
+                text=f"Checking Card <code>{cc}</code>\nGate ➜ <b>STRIPE AUTH PLAY</b>",
+                reply_markup=keyboard,
+                parse_mode="HTML"
+            )
+
+            time.sleep(4)
+            checked_cards.add(cc)
+
+        # --- Completed
+        elapsed = time.time() - start_all
         bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=message_id,
-            text=f"Checking Card <code>{cc}</code>\nGate ➜ <b>STRIPE AUTH PLAY</b>",
-            reply_markup=keyboard,
+            text=f"Check Completed ✅\n\n"
+                 f"Approved:   {approved}\n"
+                 f"Decline ❌: {declined}\n"
+                 f"3D card 💳: {otp_cards}\n"
+                 f"Total ♻ : {total}\n"
+                 f"Time: {elapsed:.2f} sec",
             parse_mode="HTML"
         )
 
-        time.sleep(4)
-        checked_cards.add(cc)
+    except Exception as e:
+        bot.send_message(message.chat.id, f"⚠️ Error: {e}")
 
-    bot.edit_message_text(
-        chat_id=message.chat.id,
-        message_id=message_id,
-        text=f"Check Completed ✅\nApproved: {approved}",
-        parse_mode="HTML"
-    )
-    active_checks[user_id] -= 1
+    finally:
+        # ✅ CLEANUP (important)
+        active_checks[user_id] = max(0, active_checks.get(user_id, 1) - 1)
+        stopuser.pop(user_id, None)
+
 
 
 # --- Stop Button Handler ---
 @bot.callback_query_handler(func=lambda call: call.data.startswith('stop_'))
 def handle_stop(call):
-    _, user_id, msg_id = call.data.split('_', 2)
-    stop_key = f"{user_id}_{msg_id}"
+    user_id = call.data.split('_')[1]
 
     if call.from_user.id == int(user_id):  # only owner can stop
-        stopuser[stop_key]['status'] = 'stop'
+        if user_id not in stopuser:
+            stopuser[user_id] = {}   # ensure dict exists
+        stopuser[user_id]['status'] = 'stop'
         bot.answer_callback_query(call.id, "Stopping your check...")
     else:
         bot.answer_callback_query(call.id, "❌ You can't stop someone else's check.")
+
+
 
           
 
