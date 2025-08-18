@@ -12,9 +12,9 @@ def vbv(ccx):
     proxies = [
     "http://gvvzfpoo:tw5khb9uqerf@136.0.207.84:6661",
     "http://799JRELTBPAE:F7BQ7D3EQSQA@175.29.133.8:5433",
-    "http://tickets:proxyon145@107.173.112.194:12345"
+    "http://ZVBUHmrp:jjNybrx6@uk4gserver55.ddns.net:8005",
+    "http://NFNmXMmY2PEtCktkfKzwhb4C:SAMA_698940@ca-mon.pvdata.host:8080"
 ]
-
     # Choose one proxy randomly
     chosen_proxy = random.choice(proxies)
 
@@ -440,12 +440,20 @@ def vbv(ccx):
     headers=headers,
     json=json_data,
 )
+    def find_between(s, start, end):
+            try:
+                return s.split(start)[1].split(end)[0]
+            except IndexError:
+                return None
+
+    #print(response.text)
+
     try:
         receipt_id = response.json()['data']['submitForCompletion']['receipt']['id']
         print("receipt_id: ", receipt_id)
     except:
         decline_code = find_between(response.text, '"localizedMessageHtml":null,"message":{"code":"', '"')
-        if decline_code == None:
+        if decline_code is None:
             print("Submit Failed")
             return "Submit Failed"
         else:
@@ -740,6 +748,7 @@ def vbv(ccx):
     json=json_data,
 )
  
+    print(response.text)
     result = response.text
 
     success_keywords = [
@@ -773,5 +782,5 @@ def vbv(ccx):
             pass
 
             
-#vbv("5148826203365002|02|27|225")                                    
+#vbv("4660302954229033|08|2024|247")                                    
 # Example usage
