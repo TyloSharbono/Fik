@@ -916,11 +916,11 @@ def process_cards(message, message_id, cards, user_id):
                 data = response.json()
                 status = data.get("status", "declined").lower()
                 if status == "approved":
-                    last = "approved"
+                    result = "approved"
                 else:
-                    last = data.get("response", "No response")
+                    result = data.get("response", "No response")
             except Exception as e:
-                 last = "error"	
+                 result = "error"	
                  		
             execution_time = time.time() - start_time
 
