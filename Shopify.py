@@ -10,7 +10,7 @@ def vbv(ccx):
     session = requests.Session()
 
     proxies = [
-    "http://gvvzfpoo:tw5khb9uqerf@136.0.207.84:6661",
+    
     "http://799JRELTBPAE:F7BQ7D3EQSQA@175.29.133.8:5433",
     "http://ZVBUHmrp:jjNybrx6@uk4gserver55.ddns.net:8005",
     "http://NFNmXMmY2PEtCktkfKzwhb4C:SAMA_698940@ca-mon.pvdata.host:8080"
