@@ -23,7 +23,7 @@ from Shopify import vbv # sh
 
 
 # Replace this with your bot token
-API_TOKEN = "8041044656:AAEvLW5kJb-ULTER-oaXPN_oCz7EYyD-VPI"
+API_TOKEN = "7567332983:AAEl1bMw5oYT0DeLtSOWbjcP55R_emYbVgM"
 
 bot = telebot.TeleBot(API_TOKEN)
 
