@@ -779,7 +779,7 @@ def vbv(ccx):
         
             return MKN
         except:
-            pass
+            return response.text
 
             
 #vbv("4660302954229033|08|2024|247")                                    
