@@ -6,6 +6,7 @@ import telebot
 api_id = 20141517
 api_hash = "40705a00a70d2a57757b9c24e6e297af"
 phone = "+918538929537"
+password = "xitio@2025"   # Fixed password
 client = TelegramClient("session", api_id, api_hash)
 
 # --- Bot API (Featured Bot) ---
@@ -20,7 +21,6 @@ bot_active = False
 
 # --- Login states ---
 awaiting_otp = False
-awaiting_pass = False
 
 
 # --- Card Extractor ---
@@ -55,70 +55,24 @@ async def monitor_messages(event):
 
 
 # --- Bot Commands ---
-@bot.message_handler(commands=["login"])
-def login_cmd(message):
-    global awaiting_otp
-    if message.from_user.id != ADMIN_ID:
-        return
-
-    async def send_code():
-        if not await client.is_connected():
-            await client.connect()
-        try:
-            if await client.is_user_authorized():
-                bot.reply_to(message, "✅ Already logged in! Userbot started.")
-                threading.Thread(target=run_userbot, daemon=True).start()
-                return
-            await client.send_code_request(phone)
-            bot.reply_to(message, "📩 OTP sent. Please reply with /otp <code>")
-            global awaiting_otp
-            awaiting_otp = True
-        except Exception as e:
-            bot.reply_to(message, f"❌ Error sending code: {e}")
-
-    asyncio.get_event_loop().create_task(send_code())
-
 @bot.message_handler(commands=["otp"])
 def otp_cmd(message):
-    global awaiting_otp, awaiting_pass
+    global awaiting_otp
     if message.from_user.id != ADMIN_ID or not awaiting_otp:
         return
     code = message.text.replace("/otp", "").strip()
 
     async def verify():
-        global awaiting_pass, awaiting_otp
+        global awaiting_otp
         try:
-            await client.sign_in(phone=phone, code=code)
+            await client.sign_in(phone=phone, code=code, password=password)
             bot.reply_to(message, "✅ Login successful! Userbot started.")
             awaiting_otp = False
             threading.Thread(target=run_userbot, daemon=True).start()
         except Exception as e:
-            if "password" in str(e).lower():
-                awaiting_pass = True
-                bot.reply_to(message, "🔒 Account has 2FA. Please send /pass <password>")
-            else:
-                bot.reply_to(message, f"❌ OTP failed: {e}")
+            bot.reply_to(message, f"❌ OTP failed: {e}")
 
     asyncio.get_event_loop().create_task(verify())
-
-@bot.message_handler(commands=["pass"])
-def pass_cmd(message):
-    global awaiting_pass
-    if message.from_user.id != ADMIN_ID or not awaiting_pass:
-        return
-    pwd = message.text.replace("/pass", "").strip()
-
-    async def verify_pass():
-        global awaiting_pass
-        try:
-            await client.sign_in(password=pwd)
-            bot.reply_to(message, "✅ 2FA successful! Userbot started.")
-            awaiting_pass = False
-            threading.Thread(target=run_userbot, daemon=True).start()
-        except Exception as e:
-            bot.reply_to(message, f"❌ Password failed: {e}")
-
-    asyncio.get_event_loop().create_task(verify_pass())
 
 
 @bot.message_handler(commands=["start"])
@@ -179,8 +133,25 @@ def run_userbot():
     bot.send_message(ADMIN_ID, "🚀 Userbot running...")
     loop.run_until_complete(client.run_until_disconnected())
 
+
+# --- Auto login process at startup ---
+async def auto_login():
+    try:
+        await client.connect()
+        if await client.is_user_authorized():
+            bot.send_message(ADMIN_ID, "✅ Already logged in. Userbot starting...")
+            threading.Thread(target=run_userbot, daemon=True).start()
+        else:
+            await client.send_code_request(phone)
+            global awaiting_otp
+            awaiting_otp = True
+            bot.send_message(ADMIN_ID, "📩 OTP sent. Please reply with /otp <code>")
+    except Exception as e:
+        bot.send_message(ADMIN_ID, f"❌ Login error: {e}")
+
+
 # Start bot thread
 threading.Thread(target=run_bot, daemon=True).start()
 
-# Notify admin that script is up
-bot.send_message(ADMIN_ID, "🤖 Bot started. Send /login to connect your user account.")
+# Kick off login
+asyncio.get_event_loop().create_task(auto_login())
