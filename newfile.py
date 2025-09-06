@@ -2,21 +2,21 @@ import re, asyncio, threading
 from telethon import TelegramClient, events
 import telebot
 
-# --- Settings ---
-API_ID = 20141517
-API_HASH = "40705a00a70d2a57757b9c24e6e297af"
-BOT_TOKEN = "8384695302:AAHUfY9Q8iL2j_4nRnTivsl2C8SgKl6W74Q"
-ADMIN_ID = 8009385011   # apna Telegram user id daalna
-TARGET_CHANNEL = -1002089891838
+# --- Hardcoded User API (Real User) ---
+api_id = 20141517
+api_hash = "40705a00a70d2a57757b9c24e6e297af"
+phone = "+918538929537"
+client = TelegramClient("session", api_id, api_hash)
 
-client = TelegramClient("session", API_ID, API_HASH)
+# --- Hardcoded Bot API (Featured Bot) ---
+BOT_TOKEN = "8384695302:AAHUfY9Q8iL2j_4nRnTivsl2C8SgKl6W74Q"
 bot = telebot.TeleBot(BOT_TOKEN)
 
-phone_number = None
-awaiting_otp = False
-bot_active = False
+# --- Settings ---
+ADMIN_ID = 8009385011
+TARGET_CHANNEL = -1002089891838
 keywords = ["approved", "charge", "valid", "thank you", "card added", "successful", "added"]
-
+bot_active = False
 
 # --- Card Extractor ---
 def is_valid_cc_format(card):
@@ -35,7 +35,6 @@ def extract_cards(text):
             cards.append(formatted)
     return cards
 
-
 # --- Telethon Listener ---
 @client.on(events.NewMessage())
 async def monitor_messages(event):
@@ -48,85 +47,62 @@ async def monitor_messages(event):
         for card in cards:
             await client.send_message(TARGET_CHANNEL, f"💳 {card}")
 
-
 # --- Bot Commands ---
-@bot.message_handler(commands=["login"])
-def login_cmd(message):
-    global phone_number, awaiting_otp
-    if message.from_user.id != ADMIN_ID:
-        return
-    try:
-        phone_number = message.text.split(" ", 1)[1].strip()
-    except:
-        bot.reply_to(message, "❌ Usage: /login <phone_number>")
-        return
-
-    async def send_code():
-        try:
-            await client.connect()
-            if await client.is_user_authorized():
-                bot.reply_to(message, "✅ Already logged in!")
-                start_userbot()
-                return
-            await client.send_code_request(phone_number)
-            awaiting_otp = True
-            bot.reply_to(message, "📩 OTP sent! Please enter with `/otp <code>`")
-        except Exception as e:
-            bot.reply_to(message, f"❌ Error: {e}")
-
-    asyncio.get_event_loop().create_task(send_code())
-
-
-@bot.message_handler(commands=["otp"])
-def otp_cmd(message):
-    global awaiting_otp
-    if message.from_user.id != ADMIN_ID or not awaiting_otp:
-        return
-    code = message.text.replace("/otp", "").strip()
-
-    async def verify():
-        global awaiting_otp
-        try:
-            await client.sign_in(phone=phone_number, code=code)
-            awaiting_otp = False
-            bot.reply_to(message, "✅ Login successful! Userbot started.")
-            start_userbot()
-        except Exception as e:
-            bot.reply_to(message, f"❌ OTP failed: {e}")
-
-    asyncio.get_event_loop().create_task(verify())
-
-
 @bot.message_handler(commands=["start"])
 def start_cmd(message):
     global bot_active
-    if message.from_user.id == ADMIN_ID:
-        bot_active = True
-        bot.reply_to(message, "✅ Monitoring started!")
-
+    if message.from_user.id != ADMIN_ID:
+        return
+    bot_active = True
+    bot.reply_to(message, "✅ Monitoring started!")
 
 @bot.message_handler(commands=["stop"])
 def stop_cmd(message):
     global bot_active
-    if message.from_user.id == ADMIN_ID:
-        bot_active = False
-        bot.reply_to(message, "🛑 Monitoring stopped!")
+    if message.from_user.id != ADMIN_ID:
+        return
+    bot_active = False
+    bot.reply_to(message, "🛑 Monitoring stopped!")
 
+@bot.message_handler(commands=["key"])
+def add_keywords(message):
+    global keywords
+    if message.from_user.id != ADMIN_ID:
+        return
+    new_words = message.text.replace("/key", "").strip().lower().split(",")
+    for w in new_words:
+        w = w.strip()
+        if w and w not in keywords:
+            keywords.append(w)
+    bot.reply_to(message, f"✅ Keywords updated: {', '.join(keywords)}")
 
-# --- Helpers ---
-def start_userbot():
-    def runner():
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(client.run_until_disconnected())
-    threading.Thread(target=runner, daemon=True).start()
+@bot.message_handler(commands=["show"])
+def show_keywords(message):
+    if message.from_user.id != ADMIN_ID:
+        return
+    bot.reply_to(message, "🔑 Current Keywords:\n" + "\n".join(keywords))
 
+@bot.message_handler(commands=["rms"])
+def remove_keyword(message):
+    global keywords
+    if message.from_user.id != ADMIN_ID:
+        return
+    word = message.text.replace("/rms", "").strip().lower()
+    if word in keywords:
+        keywords.remove(word)
+        bot.reply_to(message, f"❌ Removed: {word}")
+    else:
+        bot.reply_to(message, f"⚠️ Not found: {word}")
 
 # --- Run both together ---
 def run_bot():
     bot.infinity_polling()
 
-threading.Thread(target=run_bot, daemon=True).start()
-print("🤖 Bot started. Send /login <phone_number> to login.")
-asyncio.get_event_loop().run_until_complete(client.connect())
-asyncio.get_event_loop().run_forever()
+async def run_userbot():
+    await client.start()  # Uses session.session
+    print("Userbot running...")
+    await client.run_until_disconnected()
+
+if __name__ == "__main__":
+    threading.Thread(target=run_bot, daemon=True).start()
+    asyncio.run(run_userbot())
