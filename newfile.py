@@ -18,6 +18,10 @@ TARGET_CHANNEL = -1002267757775
 keywords = ["approved", "charge", "valid", "thank you", "card added", "successful", "added"]
 bot_active = False
 
+# --- Login states ---
+awaiting_otp = False
+awaiting_pass = False
+
 
 # --- Card Extractor ---
 def is_valid_cc_format(card):
@@ -51,6 +55,72 @@ async def monitor_messages(event):
 
 
 # --- Bot Commands ---
+@bot.message_handler(commands=["login"])
+def login_cmd(message):
+    global awaiting_otp
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    async def send_code():
+        if not await client.is_connected():
+            await client.connect()
+        try:
+            if await client.is_user_authorized():
+                bot.reply_to(message, "✅ Already logged in! Userbot started.")
+                threading.Thread(target=run_userbot, daemon=True).start()
+                return
+            await client.send_code_request(phone)
+            bot.reply_to(message, "📩 OTP sent. Please reply with /otp <code>")
+            global awaiting_otp
+            awaiting_otp = True
+        except Exception as e:
+            bot.reply_to(message, f"❌ Error sending code: {e}")
+
+    asyncio.get_event_loop().create_task(send_code())
+
+@bot.message_handler(commands=["otp"])
+def otp_cmd(message):
+    global awaiting_otp, awaiting_pass
+    if message.from_user.id != ADMIN_ID or not awaiting_otp:
+        return
+    code = message.text.replace("/otp", "").strip()
+
+    async def verify():
+        global awaiting_pass, awaiting_otp
+        try:
+            await client.sign_in(phone=phone, code=code)
+            bot.reply_to(message, "✅ Login successful! Userbot started.")
+            awaiting_otp = False
+            threading.Thread(target=run_userbot, daemon=True).start()
+        except Exception as e:
+            if "password" in str(e).lower():
+                awaiting_pass = True
+                bot.reply_to(message, "🔒 Account has 2FA. Please send /pass <password>")
+            else:
+                bot.reply_to(message, f"❌ OTP failed: {e}")
+
+    asyncio.get_event_loop().create_task(verify())
+
+@bot.message_handler(commands=["pass"])
+def pass_cmd(message):
+    global awaiting_pass
+    if message.from_user.id != ADMIN_ID or not awaiting_pass:
+        return
+    pwd = message.text.replace("/pass", "").strip()
+
+    async def verify_pass():
+        global awaiting_pass
+        try:
+            await client.sign_in(password=pwd)
+            bot.reply_to(message, "✅ 2FA successful! Userbot started.")
+            awaiting_pass = False
+            threading.Thread(target=run_userbot, daemon=True).start()
+        except Exception as e:
+            bot.reply_to(message, f"❌ Password failed: {e}")
+
+    asyncio.get_event_loop().create_task(verify_pass())
+
+
 @bot.message_handler(commands=["start"])
 def start_cmd(message):
     global bot_active
@@ -98,15 +168,19 @@ def remove_keyword(message):
         bot.reply_to(message, f"⚠️ Not found: {word}")
 
 
-# --- Run both together ---
+# --- Run both ---
 def run_bot():
     bot.infinity_polling()
 
 def run_userbot():
-    asyncio.run(client.start(phone=phone))
-    print("Userbot running...")
-    client.run_until_disconnected()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(client.start())
+    bot.send_message(ADMIN_ID, "🚀 Userbot running...")
+    loop.run_until_complete(client.run_until_disconnected())
 
-# Run threads for both
+# Start bot thread
 threading.Thread(target=run_bot, daemon=True).start()
-run_userbot()
+
+# Notify admin that script is up
+bot.send_message(ADMIN_ID, "🤖 Bot started. Send /login to connect your user account.")
