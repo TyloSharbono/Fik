@@ -11,3 +11,6 @@ faker
 lxml
 certifi
 urllib3
+telethon
+pyTelegramBotAPI
+asyncio
