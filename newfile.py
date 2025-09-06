@@ -10,8 +10,7 @@ PHONE = "+918538929537"
 PASSWORD = "xitio@2025"
 BOT_TOKEN = "8384695302:AAHUfY9Q8iL2j_4nRnTivsl2C8SgKl6W74Q"
 ADMIN_ID = 8009385011
-WEBHOOK_URL = "https://web-production-99319.up.railway.app/webhook
-"  # e.g. https://your-app.up.railway.app/webhook
+WEBHOOK_URL = "https://web-production-99319.up.railway.app/webhook"
 
 # --- User API (Real User) ---
 client = TelegramClient("session", API_ID, API_HASH)
