@@ -1,25 +1,29 @@
-import re, asyncio, threading
+import os, re, asyncio, threading
 from telethon import TelegramClient, events
 import telebot
+from flask import Flask, request
+
+# --- Environment Variables ---
+API_ID = "20141517"
+API_HASH = "40705a00a70d2a57757b9c24e6e297af"
+PHONE = "+918538929537"
+PASSWORD = "xitio@2025"
+BOT_TOKEN = "8384695302:AAHUfY9Q8iL2j_4nRnTivsl2C8SgKl6W74Q"
+ADMIN_ID = 8009385011
+WEBHOOK_URL = "https://web-production-99319.up.railway.app/webhook
+"  # e.g. https://your-app.up.railway.app/webhook
 
 # --- User API (Real User) ---
-api_id = 20141517
-api_hash = "40705a00a70d2a57757b9c24e6e297af"
-phone = "+918538929537"
-password = "xitio@2025"   # Fixed password
-client = TelegramClient("session", api_id, api_hash)
+client = TelegramClient("session", API_ID, API_HASH)
 
 # --- Bot API (Featured Bot) ---
-BOT_TOKEN = "8384695302:AAHUfY9Q8iL2j_4nRnTivsl2C8SgKl6W74Q"
 bot = telebot.TeleBot(BOT_TOKEN)
+app = Flask(__name__)
 
 # --- Settings ---
-ADMIN_ID = 8009385011
-TARGET_CHANNEL = -1002089891838
+TARGET_CHANNEL = int(os.getenv("TARGET_CHANNEL", "-1001234567890"))
 keywords = ["approved", "charge", "valid", "thank you", "card added", "successful", "added"]
 bot_active = False
-
-# --- Login states ---
 awaiting_otp = False
 
 
@@ -65,7 +69,7 @@ def otp_cmd(message):
     async def verify():
         global awaiting_otp
         try:
-            await client.sign_in(phone=phone, code=code, password=password)
+            await client.sign_in(phone=PHONE, code=code, password=PASSWORD or None)
             bot.reply_to(message, "✅ Login successful! Userbot started.")
             awaiting_otp = False
             threading.Thread(target=run_userbot, daemon=True).start()
@@ -123,9 +127,6 @@ def remove_keyword(message):
 
 
 # --- Run both ---
-def run_bot():
-    bot.infinity_polling()
-
 def run_userbot():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -142,7 +143,7 @@ async def auto_login():
             bot.send_message(ADMIN_ID, "✅ Already logged in. Userbot starting...")
             threading.Thread(target=run_userbot, daemon=True).start()
         else:
-            await client.send_code_request(phone)
+            await client.send_code_request(PHONE)
             global awaiting_otp
             awaiting_otp = True
             bot.send_message(ADMIN_ID, "📩 OTP sent. Please reply with /otp <code>")
@@ -150,8 +151,23 @@ async def auto_login():
         bot.send_message(ADMIN_ID, f"❌ Login error: {e}")
 
 
-# Start bot thread
-threading.Thread(target=run_bot, daemon=True).start()
+# --- Webhook Setup ---
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
+    bot.process_new_updates([update])
+    return "OK", 200
 
-# Kick off login
-asyncio.get_event_loop().create_task(auto_login())
+
+# --- Start ---
+if __name__ == "__main__":
+    # Set webhook
+    bot.remove_webhook()
+    bot.set_webhook(url=WEBHOOK_URL)
+
+    # Start login coroutine
+    asyncio.get_event_loop().create_task(auto_login())
+
+    # Run Flask server for webhook
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
