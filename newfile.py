@@ -14,7 +14,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 # --- Settings ---
 ADMIN_ID = 8009385011
-TARGET_CHANNEL = -1002267757775
+TARGET_CHANNEL = -1002089891838
 keywords = ["approved", "charge", "valid", "thank you", "card added", "successful", "added"]
 bot_active = False
 
