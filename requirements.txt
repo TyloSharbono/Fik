@@ -2,3 +2,6 @@ telethon==1.35.0
 pyTelegramBotAPI==4.23.0
 Flask==3.0.3
 gunicorn==23.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.3
+pycountry>=23.12.11
