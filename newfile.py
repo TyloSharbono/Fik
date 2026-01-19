@@ -1095,7 +1095,8 @@ def stop_stxt(call):
 
 
 
-
+bot.remove_webhook(drop_pending_updates=True)
+bot.infinity_polling()
 print("Bot is running...")
 bot.infinity_polling()
 
