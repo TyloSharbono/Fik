@@ -12,7 +12,7 @@ import asyncio
 #======== Api Import @OnlyXFanbot ==≠==
 
 #8061815204:AAE5tG35y-Ztsyq1aXHFByqTjs4OoXMHsUY
-API_TOKEN = "7567332983:AAFBAqaid4NkBKxqUl4Kg529IYDXMYgU3MA"
+API_TOKEN = "7567332983:AAF3TFQifT0VWZneHRvwICJACK2zSn87YtU"
 
 bot = telebot.TeleBot(API_TOKEN)
 
@@ -1095,8 +1095,7 @@ def stop_stxt(call):
 
 
 
-bot.remove_webhook(drop_pending_updates=True)
-bot.infinity_polling()
+
 print("Bot is running...")
 bot.infinity_polling()
 
